@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GrowTech</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="GrowTech builds scalable hydroponic vertical farms that run entirely on solar power, in Accra, Ghana.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Roboto:wght@400;500;700&family=Edu+SA+Beginner:wght@500;700&display=swap">
+<style>
+/* Layout: the live 3D farm is the page. A sticky stage holds the simulation; the story scrolls beside it and every chapter moves the camera, the clock or the farm size. Below it: clients, services, partners, story, contact. Palette and the handwritten accent are borrowed from the 2024 GrowTech site. */
+:root{
+  --bg:#F4F5EC; --surface:#FFFFFF; --fg:#1E2813; --muted:#56604A; --line:#D9DCCB;
+  --olive-dark:#283618; --olive:#606C38; --sage:#A4AC86; --sun:#FEC42D; --soil:#6B5240;
+  --leaf:#3F7A2E; --leaf-soft:#E3EDD5; --warn:#A8431C; --warn-soft:#F7E2D8; --data:#2C64B0;
+  --on-dark:#F2F4E8; --on-dark-muted:#C2C9AE;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --hand:"Edu SA Beginner","Comic Sans MS",cursive;
+  --header-h:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12170C; --surface:#1A2112; --fg:#E8ECDC; --muted:#A9B297; --line:#2E3823;
+  --olive-dark:#0E1308; --olive:#8C9A5B; --sage:#7F8866; --soil:#B08E73;
+  --leaf:#8CC873; --leaf-soft:#22311A; --warn:#FF9466; --warn-soft:#3A2116; --data:#86B4F5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12170C; --surface:#1A2112; --fg:#E8ECDC; --muted:#A9B297; --line:#2E3823;
+  --olive-dark:#0E1308; --olive:#8C9A5B; --sage:#7F8866; --soil:#B08E73;
+  --leaf:#8CC873; --leaf-soft:#22311A; --warn:#FF9466; --warn-soft:#3A2116; --data:#86B4F5; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+h1,h2,h3{font-family:var(--display);line-height:1.04;margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+a{color:inherit}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1280px;margin:0 auto}
+.hand{font-family:var(--hand);font-weight:700;color:var(--olive);font-size:1.25rem;line-height:1.2}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--body);font-weight:500;font-size:15px;border-radius:999px;padding:10px 18px;border:1px solid var(--olive);background:transparent;color:var(--fg);cursor:pointer;text-decoration:none}
+.btn.solid{background:var(--olive-dark);border-color:var(--olive-dark);color:var(--on-dark)}
+.btn.sun{background:var(--sun);border-color:var(--sun);color:#1E2813}
+.btn:hover{filter:brightness(1.08)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+
+/* top bar + header (borrowed) */
+.topbar{background:var(--olive-dark);color:var(--on-dark);font-size:13.5px}
+.topbar .wrap{display:flex;flex-wrap:wrap;gap:6px 24px;justify-content:space-between;padding-block:7px}
+.topbar span{display:inline-flex;gap:8px;align-items:center}
+.topbar b{color:var(--sun);font-weight:500}
+header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:var(--header-h)}
+.logo{display:block;height:30px}
+.logo img{height:30px;width:auto;display:block}
+:root[data-theme="dark"] .logo img{filter:invert(1) hue-rotate(180deg) brightness(1.2)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo img{filter:invert(1) hue-rotate(180deg) brightness(1.2)}}
+nav.main{display:flex;gap:22px;align-items:center;font-size:15px}
+nav.main a{text-decoration:none;color:var(--muted)}
+nav.main a:hover{color:var(--fg)}
+@media (max-width:860px){nav.main a.nl{display:none}}
+
+/* the story: sticky stage + chapters */
+.story{position:relative;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:0}
+.stage{position:sticky;top:calc(var(--header-h) + env(safe-area-inset-top,0px));height:calc(100vh - var(--header-h) - 36px - env(safe-area-inset-top,0px));grid-column:2;grid-row:1;background:#0b1424;overflow:hidden}
+.stage canvas{display:block;width:100%;height:100%;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.chapters{grid-column:1;grid-row:1;display:flex;flex-direction:column}
+.ch{min-height:88vh;display:flex;flex-direction:column;justify-content:center;gap:16px;padding-block:48px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:40px;max-width:560px;margin-left:auto;width:100%}
+.ch h1{font-size:clamp(2.6rem,5vw,4.4rem);font-weight:800}
+.ch h2{font-size:clamp(2rem,3.4vw,2.9rem);font-weight:800}
+.ch p.lede{font-size:1.15rem;color:var(--muted);max-width:44ch}
+.ch .step{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--olive)}
+.ch .facts{display:flex;flex-wrap:wrap;gap:8px}
+.ch .facts span{font-size:13.5px;background:var(--leaf-soft);color:var(--fg);padding:4px 11px;border-radius:999px}
+.ch .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ch:not(.active) > *{opacity:.38;transition:opacity .4s}
+.ch.active > *{opacity:1;transition:opacity .4s}
+@media (prefers-reduced-motion: reduce){.ch > *{transition:none}}
+
+/* overlays on the stage */
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;transform:translate(-50%,-100%);font:500 11.5px/1.3 var(--body);background:rgba(20,27,12,.78);color:#F2F4E8;padding:3px 8px;border-radius:5px;white-space:nowrap;border:1px solid rgba(254,196,45,.35)}
+.hud{position:absolute;left:16px;top:16px;display:flex;flex-direction:column;gap:2px;background:rgba(20,27,12,.7);color:#F2F4E8;padding:10px 14px;border-radius:10px;pointer-events:none}
+.hud .clock{font-family:var(--display);font-size:2rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.hud .sub{font-size:12px;color:#C2C9AE}
+.gauges{position:absolute;left:16px;right:16px;bottom:16px;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+.gauge{background:rgba(20,27,12,.74);color:#F2F4E8;border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;min-width:96px}
+.gauge .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#C2C9AE}
+.gauge .v{font-family:var(--display);font-weight:800;font-size:1.5rem;line-height:1.05;font-variant-numeric:tabular-nums}
+.gauge .v small{font-size:.8rem;font-weight:500;color:#C2C9AE;margin-left:2px}
+.gauge.sun .v{color:#FEC42D} .gauge.bat .v{color:#A6E08C} .gauge.load .v{color:#9CC3FF}
+.gauge .bar{height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin-top:5px;overflow:hidden}
+.gauge .bar i{display:block;height:100%;background:#A6E08C}
+.gauge .bar i.low{background:#FF9466}
+.loadsrow{display:flex;gap:10px;align-items:center;font-size:12px}
+.loadsrow span{display:inline-flex;align-items:center;gap:5px}
+.loadsrow i{width:8px;height:8px;border-radius:50%;background:#6B7458;display:inline-block}
+.loadsrow i.on{background:#A6E08C} .loadsrow i.shed{background:#FF9466}
+.stage .tag{position:absolute;right:16px;top:16px;font-size:11.5px;color:#E8ECDC;background:rgba(20,27,12,.6);padding:4px 10px;border-radius:999px;pointer-events:none}
+.part{position:absolute;right:16px;top:52px;width:min(330px,calc(100% - 32px));background:rgba(17,23,10,.94);color:#EEF2E2;border:1px solid rgba(254,196,45,.35);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.part .role{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#FEC42D}
+.part h3{font-size:1.25rem;color:#fff}
+.part p{font-size:13.5px;line-height:1.45}
+.part .spec{font-size:12.5px;color:#D9DFC6}
+.part .live{font-size:12.5px;color:#9CC3FF}
+.part .x{position:absolute;right:6px;top:4px;background:none;border:0;color:#C2C9AE;font-size:20px;cursor:pointer;padding:4px 8px}
+.stagefail{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:#E8ECDC}
+
+/* chapter controls */
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.seg button{font:500 13.5px var(--body);background:transparent;color:var(--fg);border:0;border-right:1px solid var(--line);padding:7px 13px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--olive-dark);color:var(--on-dark)}
+.ctl{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.ctl label,.ctl .lab{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--olive)}
+.ladder{display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.ladder div{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 14px;background:var(--surface);font-size:14.5px;border-top:1px solid var(--line)}
+.ladder div:first-child{border-top:0}
+.ladder div b{font-family:var(--display)}
+.ladder div span{color:var(--muted);font-size:13px}
+.ladder div.hit{background:var(--warn-soft)}
+.ladder div.hit span{color:var(--warn);font-weight:500}
+.partlist{display:flex;flex-wrap:wrap;gap:6px}
+.partlist button{font:500 13px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:5px 11px;cursor:pointer}
+.partlist button[aria-pressed="true"]{border-color:var(--olive);background:var(--leaf-soft)}
+.note{font-size:12.5px;color:var(--muted)}
+
+@media (max-width:900px){
+  .story{grid-template-columns:minmax(0,1fr)}
+  .stage{grid-column:1;height:52vh;z-index:5}
+  .chapters{grid-column:1;grid-row:2}
+  .ch{min-height:auto;margin:0;max-width:none;padding-block:28px 36px;padding-right:max(16px,env(safe-area-inset-right,0px));padding-left:max(16px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--bg)}
+  .ch:not(.active) > *{opacity:1}
+  .gauge{min-width:76px;padding:6px 9px}
+  .gauge .v{font-size:1.15rem}
+  .loadsrow{display:none}
+  .part{top:auto;bottom:12px;right:12px;left:12px;width:auto}
+}
+
+/* sections after the story */
+section.band{padding-block:88px}
+section.band h2{font-size:clamp(2rem,3.6vw,3rem);font-weight:800}
+.sec-head{display:flex;flex-direction:column;gap:10px;max-width:720px;margin-bottom:40px}
+.sec-head p{color:var(--muted);font-size:1.08rem}
+.tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:860px){.tiers{grid-template-columns:minmax(0,1fr)}}
+.tier{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.tier .n{font-family:var(--display);font-weight:800;font-size:3rem;line-height:1;color:var(--olive)}
+.tier h3{font-size:1.35rem}
+.tier p{color:var(--muted)}
+.tier button{align-self:flex-start;margin-top:auto}
+.promise{margin-top:20px;background:var(--olive-dark);color:var(--on-dark);border-radius:16px;padding:22px 26px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:baseline}
+.promise b{font-family:var(--display);font-size:1.3rem}
+.promise span{color:var(--on-dark-muted)}
+/* the farm glyph: a small isometric module reused as an icon below the story */
+.glyph{display:block}
+
+/* what we do: the client journey as one line */
+.journey{background:var(--surface);border-block:1px solid var(--line)}
+.journey .top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;margin-bottom:48px}
+@media (max-width:860px){.journey .top{grid-template-columns:minmax(0,1fr)}}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:24px;position:relative}
+.steps::before{content:"";position:absolute;left:20px;right:20px;top:20px;height:2px;background:var(--sage)}
+.steps li{position:relative;display:flex;flex-direction:column;gap:10px;min-width:0}
+.steps .dot{width:42px;height:42px;border-radius:50%;background:var(--sun);color:#1E2813;font:800 1rem var(--display);display:grid;place-items:center;position:relative;box-shadow:0 0 0 6px var(--surface)}
+.steps li:last-child .dot{background:var(--olive-dark);color:var(--on-dark)}
+.steps h3{font-size:1.3rem;margin-top:6px}
+.steps p{color:var(--muted);font-size:15px}
+.steps .k{font-family:var(--hand);font-weight:700;color:var(--soil);font-size:1.05rem}
+@media (max-width:900px){
+  .steps{grid-template-columns:minmax(0,1fr);gap:28px;padding-left:4px}
+  .steps::before{left:24px;right:auto;top:20px;bottom:20px;width:2px;height:auto}
+  .steps li{display:grid;grid-template-columns:42px minmax(0,1fr);column-gap:18px;row-gap:4px}
+  .steps .dot{grid-row:1 / span 3}
+  .steps h3{margin-top:0}
+}
+.diy{margin-top:40px;font-size:15px;color:var(--muted);border-top:1px dashed var(--line);padding-top:16px}
+
+/* pilot board */
+.pilot{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:56px;align-items:start}
+@media (max-width:900px){.pilot{grid-template-columns:minmax(0,1fr);gap:32px}}
+.pilot .lede{color:var(--muted);font-size:1.08rem;max-width:46ch}
+.pilot .when{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.pilot .when span{font-size:13.5px;background:var(--leaf-soft);padding:4px 11px;border-radius:999px}
+.board{list-style:none;margin:0;padding:0;border-top:2px solid var(--olive-dark)}
+.board li{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:20px;align-items:center;padding:20px 0;border-bottom:1px solid var(--line)}
+.board .glyph{width:64px;height:56px}
+.board .who{display:flex;flex-direction:column;gap:4px;min-width:0}
+.board .who img{height:34px;width:auto;max-width:100%;align-self:flex-start;background:#fff;border-radius:6px;padding:3px 7px}
+.board .who b{font-family:var(--display);font-weight:800;font-size:1.45rem;line-height:1.1}
+.board .who span{color:var(--muted);font-size:14.5px}
+.board .tag{font:700 12px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--olive);white-space:nowrap}
+@media (max-width:520px){.board li{grid-template-columns:48px minmax(0,1fr)}.board .glyph{width:48px;height:42px}.board .tag{grid-column:2}}
+
+/* story */
+.storyband{background:var(--olive-dark);color:var(--on-dark);padding-bottom:0!important}
+.storyband .hand{color:var(--sun)}
+.storyband .grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:56px;align-items:start}
+@media (max-width:900px){.storyband .grid{grid-template-columns:minmax(0,1fr);gap:32px}}
+.storyband .say{font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,2.6vw,2.2rem);line-height:1.2;color:var(--on-dark);max-width:30ch;text-wrap:balance}
+.storyband .say em{font-style:normal;color:var(--sun)}
+.storyband p.body{color:var(--on-dark-muted);font-size:1.05rem;max-width:56ch}
+.crew{list-style:none;margin:0;padding:0;border-top:1px solid rgba(242,244,232,.22)}
+.crew li{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(242,244,232,.22);font-size:15.5px}
+.crew li b{font-family:var(--display);font-size:1.1rem}
+.crew li span{color:var(--on-dark-muted)}
+.strip{margin:64px 0 0;position:relative}
+.strip img{width:100%;max-width:100%;display:block;aspect-ratio:21/8;object-fit:cover;object-position:50% 45%;border-radius:16px 16px 0 0}
+.strip figcaption{position:absolute;left:16px;bottom:14px;font-size:12.5px;background:rgba(20,27,12,.72);color:#F2F4E8;padding:4px 10px;border-radius:999px}
+
+/* contact: the one loud band */
+.call{background:var(--sun);color:#1E2813}
+.call .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+@media (max-width:900px){.call .grid{grid-template-columns:minmax(0,1fr);gap:24px}}
+.call .hand{color:#5B4A12}
+.call h2{color:#1E2813}
+.call p{color:#3D3A1E;font-size:1.08rem;max-width:44ch}
+.call .num{font:800 clamp(2.1rem,5vw,3.6rem)/1 var(--display);letter-spacing:-.02em;user-select:all;overflow-wrap:anywhere}
+.call .meta{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;font-size:15px}
+.call .meta b{font-weight:500}
+.call .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;align-items:center}
+.call .btn{border-color:#1E2813;color:#1E2813}
+.call .btn.solid{background:#1E2813;color:#FEC42D}
+.copied{font-size:14px;font-weight:500}
+
+/* footer */
+footer.site{background:var(--olive-dark);color:var(--on-dark-muted);font-size:14.5px;padding-block:56px 32px}
+footer.site .cols{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:32px}
+@media (max-width:860px){footer.site .cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+@media (max-width:480px){footer.site .cols{grid-template-columns:minmax(0,1fr)}}
+footer.site .brand img{height:28px;width:auto;filter:invert(1) hue-rotate(180deg) brightness(1.25)}
+footer.site .brand p{margin-top:14px;max-width:34ch}
+footer.site h3{font:700 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--sun);margin-bottom:12px}
+footer.site ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+footer.site a{color:var(--on-dark);text-decoration:none}
+footer.site a:hover{text-decoration:underline}
+footer.site .base{margin-top:48px;padding-top:20px;border-top:1px solid rgba(242,244,232,.18);display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;font-size:13px}
+</style>
+
+<div class="topbar gut"><div class="wrap">
+  <span>Call <b>(+233) 544198026</b></span>
+  <span>Accra, Ghana</span>
+  <span>Mon–Sat · 7 AM – 5 PM</span>
+</div></div>
+
+<header class="site gut"><div class="wrap">
+  <a class="logo" href="#top" aria-label="GrowTech home"><img src="assets/growtech-logo.png" alt="GrowTech"></a>
+  <nav class="main" aria-label="Main">
+    <a class="nl" href="#how">How it works</a>
+    <a class="nl" href="#clients">Who it's for</a>
+    <a class="nl" href="#services">Services</a>
+    <a class="nl" href="#partners">Pilot</a>
+    <a class="btn solid" href="#contact">Talk to us</a>
+  </nav>
+</div></header>
+
+<main id="top">
+<div class="story" id="how">
+  <div class="stage" id="stage" aria-label="Live 3D model of a GrowTech solar vertical farm">
+    <canvas id="farm" aria-label="3D GrowTech farm. Drag to turn it; click a part to learn what it does. The parts list in the last chapter works with a keyboard."></canvas>
+    <div class="labels" id="labels"></div>
+    <div class="hud" aria-hidden="true"><span class="clock" id="clock">06:00</span><span class="sub" id="clockSub">Sunrise · typical day</span></div>
+    <span class="tag">Live simulation · drag to turn</span>
+    <div class="gauges" aria-live="off">
+      <div class="gauge sun"><span class="k">Panel</span><span class="v" id="gPanel">0<small>W</small></span></div>
+      <div class="gauge load"><span class="k">Farm uses</span><span class="v" id="gLoad">0<small>W</small></span></div>
+      <div class="gauge bat"><span class="k">Battery</span><span class="v" id="gBat">70<small>%</small></span><div class="bar"><i id="gBar" style="width:70%"></i></div></div>
+      <div class="gauge"><span class="k">Running</span><div class="loadsrow"><span><i id="lPump" class="on"></i>Pump</span><span><i id="lLed"></i>LEDs</span><span><i id="lFan"></i>Fans</span></div></div>
+    </div>
+    <div class="part" id="part" hidden>
+      <button class="x" id="partClose" aria-label="Close part details">×</button>
+      <span class="role" id="pRole"></span><h3 id="pName"></h3><p id="pDoes"></p><span class="spec" id="pSpec"></span><span class="live" id="pLive"></span>
+    </div>
+  </div>
+
+  <div class="chapters">
+    <article class="ch" data-view="overview" data-time="9.5" id="ch-hero">
+      <p class="hand">Climate-smart future for farming</p>
+      <h1>Vertical farms that power themselves</h1>
+      <p class="lede">GrowTech builds hydroponic vertical farms that run entirely on solar. Start with one module in your backyard or grow to a commercial farm. The farm beside this text is live: it is running its own day right now.</p>
+      <div class="row"><a class="btn solid" href="#ch-explore">Explore the farm</a><a class="btn" href="#ch-panel">See how it works</a></div>
+    </article>
+
+    <article class="ch" data-view="panelnoon" id="ch-panel">
+      <span class="step">Step 1 · Power</span>
+      <h2>The sun goes on top</h2>
+      <p class="lede">Every module carries its own ~450 W solar panel as a roof. The power source uses no extra ground, and the shade keeps the top tier cooler.</p>
+      <div class="facts"><span>~1,350 Wh a day*</span><span>Tilted ~12° to the sun</span></div>
+    </article>
+
+    <article class="ch" data-view="powernoon" id="ch-power">
+      <span class="step">Step 2 · Storage</span>
+      <h2>All the power in one small cabinet</h2>
+      <p class="lede">A lockable cabinet on the end of the frame holds the 24 V lithium battery, the charge controller and the ESP32 controller. Watch the yellow dots: energy flows from the panel into the battery and out to the farm.</p>
+      <div class="facts"><span>24 V DC, no inverter</span><span>2.56 kWh battery</span><span>Away from the water</span></div>
+    </article>
+
+    <article class="ch" data-view="water" id="ch-water">
+      <span class="step">Step 3 · Water</span>
+      <h2>Water that never stops moving</h2>
+      <p class="lede">The pump lifts nutrient water to every tier. It flows past the roots in the channels and drains back to the tank. No soil, and the same water goes round again.</p>
+      <div class="facts"><span>Closed loop</span><span>Pump runs day and night</span></div>
+    </article>
+
+    <article class="ch" data-view="racknight" id="ch-night">
+      <span class="step">Step 4 · Night</span>
+      <h2>Growing after dark</h2>
+      <p class="lede">After sunset the battery takes over. LED grow lights extend the day and the pump keeps running. Drag the clock to see any hour.</p>
+      <div class="ctl"><label for="hour">Time of day</label><input type="range" id="hour" min="0" max="23.99" step="0.05" value="21"></div>
+    </article>
+
+    <article class="ch" data-view="overview" id="ch-cloud">
+      <span class="step">Step 5 · Cloudy days</span>
+      <h2>When the clouds stay, the plants still drink</h2>
+      <p class="lede">If the battery runs low, the controller switches loads off in order. Fans go first, then the lights. The pump always keeps running.</p>
+      <div class="ladder" aria-label="Load-shedding steps">
+        <div id="sh1"><b>Fans off</b><span>below ~35%</span></div>
+        <div id="sh2"><b>LED lights off</b><span>below ~20%</span></div>
+        <div><b>Pump</b><span>always on</span></div>
+      </div>
+      <div class="row"><button class="btn sun" id="runCloudy">Run a cloudy week</button><button class="btn" id="runLow">Low battery at dusk</button></div>
+    </article>
+
+    <article class="ch" data-view="row" id="ch-scale">
+      <span class="step">Step 6 · Scale</span>
+      <h2>As big and as high as you want</h2>
+      <p class="lede">Modules are built like scaffolding. Bolt them side by side or stack them upward. Each one brings its own panel, battery and controller, so the farm stays solar however large it gets.</p>
+      <div class="seg" role="group" aria-label="Farm size" id="sizeSeg">
+        <button data-size="overview">1 module</button><button data-size="row">Row of 3</button><button data-size="stack">2 levels</button><button data-size="farm">3 × 2 farm</button>
+      </div>
+      <p class="note">One module is about 2.1 m × 1.1 m and 1.8 m high with 4 tiers (indicative).</p>
+    </article>
+
+    <article class="ch" data-view="overview" id="ch-explore">
+      <span class="step">Your turn</span>
+      <h2>Explore the farm</h2>
+      <p class="lede">Turn and zoom the model, click any part, change the weather or the battery, and speed up time.</p>
+      <div class="ctl">
+        <span class="lab">Weather (peak sun hours)</span>
+        <div class="seg" role="group" aria-label="Weather" id="wxSeg"><button data-wx="sunny">Sunny 5 h</button><button data-wx="typical">Typical 4 h</button><button data-wx="cloudy">Cloudy 2.5 h</button><button data-wx="rainy">Rainy 1 h</button></div>
+        <span class="lab">Battery</span>
+        <div class="seg" role="group" aria-label="Battery size" id="batSeg"><button data-ah="100">100 Ah</button><button data-ah="50">50 Ah</button></div>
+        <span class="lab">Speed</span>
+        <div class="row"><button class="btn" id="play">Pause</button><div class="seg" role="group" aria-label="Speed" id="speedSeg"><button data-speed="10">Slow</button><button data-speed="30">Normal</button><button data-speed="120">Fast</button><button data-speed="480">Days</button></div></div>
+        <span class="lab">Parts</span>
+        <div class="partlist" id="partlist"></div>
+        <label class="row" style="text-transform:none;letter-spacing:0;font-size:14px;gap:8px"><input type="checkbox" id="lblToggle" checked> Show labels</label>
+      </div>
+      <p class="note">*Simulated with planning figures: 4 peak sun hours in Accra, about 1,150 Wh used per module per day. Our solar tests will replace them with measured data.</p>
+    </article>
+  </div>
+</div>
+
+<section class="band gut" id="clients"><div class="wrap">
+  <div class="sec-head"><p class="hand">For every size of grower</p><h2>From one backyard module to a commercial farm</h2><p>Tell us your space and what you want to grow. We size the farm, build it, install it and look after it.</p></div>
+  <div class="tiers">
+    <div class="tier"><span class="n">1</span><h3>Backyard grower</h3><p>One module of fresh greens and herbs at home, as a hobby or for the family table.</p><button class="btn" data-goto="overview">Show me 1 module</button></div>
+    <div class="tier"><span class="n">3+</span><h3>Growing business</h3><p>A row of modules for a restaurant, school, hotel or shop that wants a steady supply.</p><button class="btn" data-goto="row">Show me a row</button></div>
+    <div class="tier"><span class="n">Many</span><h3>Commercial farm</h3><p>Rows and levels of modules, as large and as high as your site allows, all running on solar.</p><button class="btn" data-goto="farm">Show me a farm</button></div>
+  </div>
+  <div class="promise"><b>We build, install and maintain every farm.</b><span>You can install and maintain it yourself, but we advise against it.</span></div>
+</div></section>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="module" viewBox="0 0 64 56">
+    <path style="fill:#2C4F8F" d="M8 14 L34 4 L58 12 L32 22 Z"/>
+    <path style="stroke:var(--sage);fill:none;stroke-width:1.8" d="M12 18 V46 M32 25 V54 M54 16 V44 M12 46 L32 54 L54 44 M12 18 L32 25 L54 16"/>
+    <path style="fill:var(--leaf)" d="M14 26 L31 32 L31 35 L14 29 Z M14 34 L31 40 L31 43 L14 37 Z M33 32 L52 25 L52 28 L33 35 Z M33 40 L52 33 L52 36 L33 43 Z"/>
+    <rect style="fill:var(--olive)" x="55" y="30" width="7" height="14" rx="1"/>
+  </symbol>
+</svg>
+
+<section class="band journey gut" id="services"><div class="wrap">
+  <div class="top">
+    <div class="sec-head" style="margin-bottom:0"><p class="hand">Experience climate-smart agriculture</p><h2>What we do, from first visit to every harvest</h2></div>
+    <a class="btn" href="#contact">Book a site visit</a>
+  </div>
+  <ol class="steps">
+    <li><span class="dot">1</span><span class="k">design</span><h3>Plan your farm</h3><p>We visit your space and size the farm: how many modules, how high, and what you want to grow.</p></li>
+    <li><span class="dot">2</span><span class="k">build</span><h3>Build the modules</h3><p>Scaffold frames, grow channels, the solar panels on top and the power cabinets, made in our workshop.</p></li>
+    <li><span class="dot">3</span><span class="k">install</span><h3>Install on site</h3><p>We set everything up, connect the power and water, and plant the first crop with you.</p></li>
+    <li><span class="dot">4</span><span class="k">care</span><h3>Maintain it</h3><p>Regular visits to check the battery, pump and nutrients, and quick fixes so it keeps producing.</p></li>
+    <li><span class="dot">5</span><span class="k">grow</span><h3>Train and supply</h3><p>Climate-smart farming training, nutrients matched to your crops, and advice to grow more with less.</p></li>
+  </ol>
+  <p class="diy">You can install and maintain the farm yourself, but we advise against it: our team knows the solar and water systems inside out.</p>
+</div></section>
+
+<section class="band gut" id="partners"><div class="wrap pilot">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <p class="hand">Proving it in the field</p>
+    <h2>Three pilot farms, three partners</h2>
+    <p class="lede">Each partner hosts one solar module and grows on it for six months while our team supervises. Their harvests and our energy readings decide what we build next.</p>
+    <div class="when"><span>1 module each</span><span>6-month pilot</span><span>Supervised by GrowTech</span></div>
+  </div>
+  <ul class="board">
+    <li><svg class="glyph" aria-hidden="true"><use href="#module"/></svg><div class="who"><img src="assets/holland-greentech.png" alt="Holland Greentech"><span>Pilot partner</span></div><span class="tag">Module 01</span></li>
+    <li><svg class="glyph" aria-hidden="true"><use href="#module"/></svg><div class="who"><b>Green Space</b><span>Pilot partner</span></div><span class="tag">Module 02</span></li>
+    <li><svg class="glyph" aria-hidden="true"><use href="#module"/></svg><div class="who"><b>Starters Technology</b><span>Founding partner of GrowTech</span></div><span class="tag">Module 03</span></li>
+  </ul>
+</div></section>
+
+<section class="band storyband gut" id="about"><div class="wrap">
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p class="hand">A story of impact</p>
+      <p class="say">It started at a vacation camp, teaching <em>15 children</em> to build a hydroponic farm.</p>
+      <p class="body">As they worked, we saw what this could become: fresh food grown close to home, in very little space. Today we are making it run entirely on the sun, so it keeps growing whatever the grid does.</p>
+    </div>
+    <ul class="crew" aria-label="Team">
+      <li><b>Triumph</b><span>Owner</span></li>
+      <li><b>Isaac</b><span>Project lead</span></li>
+      <li><b>Hickman</b><span>Build and electrical</span></li>
+      <li><b>Ben</b><span>Build</span></li>
+      <li><b>Gideon</b><span>Mentor</span></li>
+    </ul>
+  </div>
+  <figure class="strip"><img src="assets/farm-render.png" alt="3D model of a GrowTech farm: six scaffold modules, three wide and two high, each with a solar panel on top"><figcaption>A six-module farm, three wide and two high, from our 3D model</figcaption></figure>
+</div></section>
+
+<section class="band call gut" id="contact"><div class="wrap grid">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <p class="hand">Let's grow together</p>
+    <h2>Talk to us about your farm</h2>
+    <p>Call for a quote, a site visit, or to see a farm in person. One module or a hundred, we start with a conversation.</p>
+  </div>
+  <div>
+    <div class="num" id="phone">(+233) 544198026</div>
+    <div class="meta"><span><b>Mon–Sat</b> · 7 AM – 5 PM</span><span><b>Accra</b>, Ghana</span></div>
+    <div class="row"><button class="btn solid" id="copyPhone">Copy number</button><a class="btn" href="#ch-explore">Explore the farm again</a><span class="copied" id="copied" hidden>Copied</span></div>
+  </div>
+</div></section>
+</main>
+
+<footer class="site gut"><div class="wrap">
+  <div class="cols">
+    <div class="brand"><img src="assets/growtech-logo.png" alt="GrowTech"><p>Scalable hydroponic vertical farms that run entirely on solar power. Built, installed and maintained in Ghana.</p></div>
+    <div><h3>Explore</h3><ul><li><a href="#how">How it works</a></li><li><a href="#ch-scale">Farm sizes</a></li><li><a href="#ch-explore">Try the simulation</a></li></ul></div>
+    <div><h3>Company</h3><ul><li><a href="#services">What we do</a></li><li><a href="#partners">Pilot partners</a></li><li><a href="#about">Our story</a></li></ul></div>
+    <div><h3>Visit or call</h3><ul><li>(+233) 544198026</li><li>Mon–Sat, 7 AM – 5 PM</li><li>Accra, Ghana</li><li>Facebook · Twitter · YouTube</li></ul></div>
+  </div>
+  <div class="base"><span>© 2026 Grow Technologies. All rights reserved.</span><span>Energy figures on this page are simulated planning figures.</span></div>
+</div></footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="farm-engine.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = id=>document.getElementById(id);
+const stage = $('stage');
+const GF = window.GrowFarm;
+if (!GF){ stage.insertAdjacentHTML('beforeend','<div class="stagefail">The live farm could not load. Check your connection and reload.</div>'); return; }
+const coarse = matchMedia('(pointer: coarse)').matches;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const farm = GF.mount({canvas:$('farm'), host:stage, labelsEl:$('labels'), zoom:false, onSelect:showPart, onFrame:tick});
+if (!farm.ok){ stage.insertAdjacentHTML('beforeend','<div class="stagefail">This browser cannot show 3D graphics. The rest of the page still works.</div>'); }
+const S = farm.S, sim = farm.sim, {battV, SHED, PARTS} = GF;
+if (!farm.ok){ let last=performance.now(); (function loop(now){ const dt=Math.min(0.1,(now-last)/1000); last=now; if(S.playing) sim.advance(dt*S.speed/60); tick(dt); requestAnimationFrame(loop); })(last); }
+S.playing = !reduce; S.speed = 20;
+
+/* interaction: on touch screens the model only takes gestures in the last chapter, so the page still scrolls */
+function setTouch(on){ if (!farm.ok) return; farm.setInteractive(on || !coarse, on); $('farm').style.touchAction = (on || !coarse) ? 'none' : 'pan-y'; if (coarse) farm.controls.enabled = on; }
+setTouch(false);
+
+/* chapters drive the farm */
+const chapters = [...document.querySelectorAll('.ch')];
+let active = null;
+function activate(ch, instant){
+  if (active === ch) return; active = ch;
+  chapters.forEach(c=>c.classList.toggle('active', c===ch));
+  if (!farm.ok) return;
+  const explore = ch.id === 'ch-explore';
+  setTouch(explore);
+  if (ch.id === 'ch-scale'){ const cur = document.querySelector('#sizeSeg [aria-pressed="true"]'); farm.setView(cur ? cur.dataset.size : 'row', instant); }
+  else if (!explore) farm.setView(ch.dataset.view, instant);
+  if (ch.dataset.time) S.T = Math.floor(S.T/24)*24 + (+ch.dataset.time);
+  if (ch.id === 'ch-cloud' && S.speed < 120) S.speed = 120;
+  if (ch.id !== 'ch-cloud' && ch.id !== 'ch-explore' && S.speed > 30) S.speed = 20;
+  farm.autoRotate = ch.id === 'ch-hero';
+}
+const io = new IntersectionObserver(es=>{ es.forEach(e=>{ if (e.isIntersecting) activate(e.target); }); }, {rootMargin:'-45% 0px -45% 0px'});
+chapters.forEach(c=>io.observe(c));
+activate(chapters[0], true);
+
+/* part details */
+function showPart(key){
+  document.querySelectorAll('#partlist button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.part===key)));
+  if (!key){ $('part').hidden = true; return; }
+  const p = PARTS[key];
+  $('pRole').textContent = p.role; $('pName').textContent = p.name; $('pDoes').textContent = p.does; $('pSpec').textContent = p.spec;
+  $('part').hidden = false; $('pLive').textContent = farm.liveText ? farm.liveText() : '';
+}
+$('partClose').addEventListener('click', ()=>farm.select ? farm.select(null) : showPart(null));
+for (const k of ['panel','rack','tray','leds','fans','tank','wiring','mppt','battery','control']){
+  const b=document.createElement('button'); b.dataset.part=k; b.textContent=PARTS[k].name.replace(' and pump','').replace(' on top',''); b.setAttribute('aria-pressed','false');
+  b.addEventListener('click', ()=>{ if (farm.select) farm.select(k, true); else showPart(k); });
+  $('partlist').appendChild(b);
+}
+
+/* controls */
+function press(segId, attr, val){ document.querySelectorAll('#'+segId+' button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset[attr]===String(val)))); }
+document.querySelectorAll('#sizeSeg button').forEach(b=>b.addEventListener('click',()=>{ press('sizeSeg','size',b.dataset.size); farm.setView && farm.setView(b.dataset.size); }));
+document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>{ press('sizeSeg','size',b.dataset.goto); $('ch-scale').scrollIntoView({behavior: reduce?'auto':'smooth', block:'center'}); farm.setView && farm.setView(b.dataset.goto); }));
+document.querySelectorAll('#wxSeg button').forEach(b=>b.addEventListener('click',()=>{ S.wx=b.dataset.wx; press('wxSeg','wx',S.wx); }));
+document.querySelectorAll('#batSeg button').forEach(b=>b.addEventListener('click',()=>{ const ah=+b.dataset.ah; farm.setBattery ? farm.setBattery(ah) : (S.ah=ah); press('batSeg','ah',ah); }));
+document.querySelectorAll('#speedSeg button').forEach(b=>b.addEventListener('click',()=>{ S.speed=+b.dataset.speed; press('speedSeg','speed',S.speed); }));
+$('play').addEventListener('click', ()=>{ S.playing=!S.playing; $('play').textContent = S.playing?'Pause':'Play'; });
+$('hour').addEventListener('input', e=>{ S.T = Math.floor(S.T/24)*24 + (+e.target.value); });
+$('lblToggle').addEventListener('change', e=>{ farm.showLabels = e.target.checked; });
+$('runCloudy').addEventListener('click', ()=>{ sim.scenario('cloudy'); press('wxSeg','wx',S.wx); press('speedSeg','speed',S.speed); $('play').textContent='Pause'; });
+$('runLow').addEventListener('click', ()=>{ sim.scenario('low'); S.speed=60; press('wxSeg','wx',S.wx); $('play').textContent='Pause'; });
+$('copyPhone').addEventListener('click', ()=>{
+  const t = $('phone').textContent, done = ()=>{ $('copied').hidden=false; setTimeout(()=>$('copied').hidden=true, 1800); };
+  try { navigator.clipboard.writeText(t).then(done, ()=>selectPhone()); } catch(e){ selectPhone(); }
+  function selectPhone(){ const r=document.createRange(); r.selectNodeContents($('phone')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
+});
+press('sizeSeg','size','row'); press('wxSeg','wx',S.wx); press('batSeg','ah',S.ah); press('speedSeg','speed',30);
+$('play').textContent = S.playing?'Pause':'Play';
+
+/* readouts on the stage */
+function hhmm(t){ const h=Math.floor(t), m=Math.floor((t-h)*60); return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+function phase(t){ return t<5.5?'Night':t<6.5?'Sunrise':t<11?'Morning':t<14?'Midday':t<17.5?'Afternoon':t<18.5?'Sunset':'Night'; }
+const wxName = {sunny:'sunny', typical:'typical day', cloudy:'cloudy', rainy:'rainy'};
+let acc = 0;
+function tick(dt){
+  acc += dt; if (acc < 0.12) return; acc = 0;
+  const L = S.last; if (!L) return; const t = S.T%24, pct = Math.round(S.soc*100);
+  $('clock').textContent = hhmm(t); $('clockSub').textContent = `${phase(t)} · ${wxName[S.wx]}`;
+  $('gPanel').innerHTML = Math.round(L.harvest)+'<small>W</small>';
+  $('gLoad').innerHTML = Math.round(L.load)+'<small>W</small>';
+  $('gBat').innerHTML = pct+'<small>%</small>';
+  const bar = $('gBar'); bar.style.width = pct+'%'; bar.classList.toggle('low', pct < SHED.fanOff);
+  const st = (el, on, shed)=>{ el.className = on ? 'on' : (shed ? 'shed' : ''); };
+  st($('lPump'), L.on.pump, S.bms); st($('lLed'), L.on.leds, L.ledSched && !S.ledsOk); st($('lFan'), L.on.fans, L.fanSched && !S.fansOk);
+  $('sh1').classList.toggle('hit', !S.fansOk); $('sh2').classList.toggle('hit', !S.ledsOk);
+  const hr = $('hour'); if (document.activeElement !== hr) hr.value = t.toFixed(2);
+  if (farm.selected && farm.liveText) $('pLive').textContent = farm.liveText();
+}
+acc = 1; tick(0);
+})();
+</script>
+
+</html>
