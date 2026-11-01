@@ -199,6 +199,11 @@ section.band h2{font-size:clamp(2.2rem,4.4vw,3.6rem)}
 .amount .k{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .amount .v{font:500 clamp(1.6rem,3vw,2.3rem)/1.1 var(--mono);letter-spacing:-.03em;color:var(--ink)}
 .amount .v.pending{color:var(--muted);font-size:clamp(1.15rem,2vw,1.45rem);letter-spacing:-.01em}
+.funds{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.funds li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;font-size:15px}
+.funds b{font:500 14px var(--mono);font-variant-numeric:tabular-nums}
+.funds i{grid-column:1 / -1;display:block;height:4px;border-radius:2px;background:var(--leaf);opacity:.85}
+.funds li:last-child i{background:var(--sun)}
 .covers{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px}
 @media (max-width:560px){.covers{grid-template-columns:minmax(0,1fr)}}
 .covers li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;font-size:15px;color:var(--ink)}
@@ -428,8 +433,8 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
   <ol class="versions">
     <li><span class="yr">2023</span><span class="vn">v1</span><h3>First MVP</h3><p>A small hydroponic lettuce farm. A lot went wrong; we fixed what we could and kept notes on the rest.</p><span class="stat">~70% of the lettuce harvested</span></li>
     <li><span class="yr">2024</span><span class="vn">v2</span><h3>Vertical racks</h3><p>Stacked PVC grow channels on steel racks, indoors under LED lights and outdoors in the sun. We grew bell peppers and habaneros.</p><span class="stat">Indoor + outdoor racks</span></li>
-    <li class="now"><span class="flag">This raise</span><span class="yr">2025 – 2026</span><span class="vn">v3</span><h3>Standalone solar module</h3><p>A scaffold module with the solar panel as its roof, a 24 V battery cabinet and a smart controller. It needs no grid power.</p><span class="stat">Plan, 3D model and firmware drafted · panel bought</span></li>
-    <li class="next"><span class="yr">Next</span><span class="vn">MVP</span><h3>Three partner pilots</h3><p>Three modules built from the proven v3 design, run on partner sites with our team supervising.</p><span class="stat">Raised separately, after v3 works</span></li>
+    <li class="now"><span class="flag">This raise</span><span class="yr">2025 – 2027</span><span class="vn">v3</span><h3>Standalone solar module</h3><p>A scaffold module with the solar panel as its roof, a 24 V battery cabinet and a smart controller. It needs no grid power.</p><span class="stat">Plan, 3D model and firmware drafted · panel bought</span></li>
+    <li class="next"><span class="yr">2027</span><span class="vn">MVP</span><h3>Three partner pilots</h3><p>Three modules built from the proven v3 design, run on partner sites with our team supervising.</p><span class="stat">Raised separately, after v3 works</span></li>
   </ol>
 </div></section>
 
@@ -443,21 +448,21 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
       <div class="lab"><span>Stage 1</span><span class="st">● Raising now</span></div>
       <h3>Build the v3 working prototype</h3>
       <p>One complete standalone module, built, wired and grown on, then tested on solar alone for a full week and through a growing cycle.</p>
-      <div class="amount"><span class="k">Amount</span><span class="v pending" id="amt1">Being finalised</span></div>
-      <ul class="covers">
-        <li>Frame, grow channels, tank and pump</li>
-        <li>Solar panel, battery, charge controller</li>
-        <li>Controller, sensors and the app</li>
-        <li>Hired technicians: fabrication, electrical, plumbing</li>
-        <li>Part-paid time for our build team</li>
-        <li>Tools, testing, seeds, nutrients, contingency</li>
+      <div class="amount"><span class="k">Amount</span><span class="v" id="amt1">GH₵ 56,000</span><span class="k" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-size:14px">Build Dec 2026 – Jan 2027 · off-grid test and grow trial Feb 2027</span></div>
+      <ul class="funds" aria-label="Use of funds, Stage 1">
+        <li><span>v3 parts, rework and spares</span><b>27,300</b><i style="width:48.7%"></i></li>
+        <li><span>Team part-time pay, 3 months</span><b>10,500</b><i style="width:18.7%"></i></li>
+        <li><span>Hired technicians and design</span><b>6,900</b><i style="width:12.3%"></i></li>
+        <li><span>Tools, transport, testing, grow trial</span><b>3,450</b><i style="width:6.2%"></i></li>
+        <li><span>Legal, accounting, v3 report</span><b>2,500</b><i style="width:4.5%"></i></li>
+        <li><span>Contingency</span><b>5,350</b><i style="width:9.6%"></i></li>
       </ul>
     </article>
     <article class="stagecard second">
       <div class="lab"><span>Stage 2</span><span>After v3 works</span></div>
       <h3>Three MVPs and a partner pilot</h3>
-      <p>Three modules built from the proven design, one each with Holland Greentech, Green Space and Starters Technology, supervised by our team.</p>
-      <div class="amount"><span class="k">Amount</span><span class="v pending" id="amt2">Estimated after Stage 1</span></div>
+      <p>Three modules built from the proven design, one each with Holland Greentech, Green Space and Starters Technology, run for six months with our team supervising.</p>
+      <div class="amount"><span class="k">Amount</span><span class="v" id="amt2">≈ GH₵ 129,500</span><span class="k" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-size:14px">Estimate · build Apr–May 2027 · pilot Jun–Nov 2027</span></div>
       <ul class="covers">
         <li>Three modules, installed</li>
         <li>Pilot visits and upkeep</li>
@@ -515,7 +520,7 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
     <span class="eyebrow">Stage 2 · The pilot</span>
     <h2>Three pilot farms, three partners</h2>
     <p class="lede">Once v3 is proven, each partner hosts one solar module and grows on it while our team supervises. Their harvests and our energy readings decide what we build and sell next.</p>
-    <div class="when"><span>1 module each</span><span>3–6 months</span><span>Supervised</span></div>
+    <div class="when"><span>1 module each</span><span>6 months</span><span>Jun–Nov 2027</span></div>
   </div>
   <div>
     <ul class="board">
