@@ -1,10 +1,8 @@
-<!doctype html>
-<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GrowTech</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="GrowTech builds scalable hydroponic vertical farms that run entirely on solar power, in Accra, Ghana.">
+<meta name="description" content="GrowTech builds hydroponic vertical farms that run themselves: their own power, sensors, AI and robotics, added step by step. Accra, Ghana.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -123,6 +121,15 @@ nav.main .btn{white-space:nowrap}
 .part .x{position:absolute;right:6px;top:4px;background:none;border:0;color:var(--night-muted);font-size:20px;cursor:pointer;padding:4px 8px}
 .stagefail{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--night-ink)}
 
+.verbadge{position:absolute;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:10px;align-items:center;background:rgba(8,20,15,.86);border:1px solid var(--night-line);border-radius:999px;padding:6px 14px;font:400 12px var(--mono);color:var(--night-ink);pointer-events:none;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+.verbadge b{font-weight:500;color:var(--night-sun)}
+.verbadge.isconcept{border-color:rgba(247,183,49,.55)}
+.stage.v2 .gauges{display:none}
+.stage.hasbadge .tag{display:none}
+.vercopy > div{display:flex;flex-direction:column;gap:8px;border-left:2px solid var(--night-sun);padding-left:16px}
+.vercopy b{font-family:var(--display);font-size:1.2rem;font-weight:700;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.vercopy p{color:var(--night-muted);font-size:15.5px}
+.concept{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#1A1405;background:var(--night-sun);padding:3px 7px;border-radius:4px}
 /* chapter controls */
 .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--night-line);border-radius:8px;overflow:hidden;background:var(--night-2)}
 .seg button{font:500 13px var(--body);background:transparent;color:var(--night-muted);border:0;border-right:1px solid var(--night-line);padding:8px 13px;cursor:pointer}
@@ -155,6 +162,7 @@ input[type=range]{width:100%;accent-color:var(--night-sun)}
   .gauge .v{font-size:1.1rem}
   .gauge.run{display:none}
   .stage .tag{display:none}
+  .verbadge{top:12px;font-size:11px}
   .part{top:auto;bottom:12px;right:12px;left:12px;width:auto}
 }
 
@@ -167,8 +175,8 @@ section.band h2{font-size:clamp(2.2rem,4.4vw,3.6rem)}
 .head p.side{color:var(--muted);font-size:1.08rem;max-width:46ch}
 @media (max-width:900px){.head{grid-template-columns:minmax(0,1fr);margin-bottom:40px}}
 
-/* journey v1 → v3 */
-.versions{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink)}
+/* roadmap v1 → v5 */
+.versions{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:2px solid var(--ink)}
 .versions li{padding:26px 24px 30px 0;display:flex;flex-direction:column;gap:12px;min-width:0;position:relative}
 .versions li + li{padding-left:24px;border-left:1px solid var(--line)}
 .versions .yr{font:500 13px var(--mono);color:var(--muted);letter-spacing:.04em}
@@ -182,9 +190,21 @@ section.band h2{font-size:clamp(2.2rem,4.4vw,3.6rem)}
 .versions li.now .stat{color:var(--paper);border-color:color-mix(in srgb,var(--paper) 25%,transparent)}
 .versions li.now .flag{position:absolute;top:-13px;left:24px;font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;background:var(--sun);color:#1A1405;padding:4px 9px;border-radius:4px}
 .versions li.next .vn{color:transparent;-webkit-text-stroke:1.5px var(--muted)}
-@media (max-width:980px){.versions{grid-template-columns:repeat(2,minmax(0,1fr))}.versions li:nth-child(3){padding-left:0;border-left:0}.versions li.now{padding-left:24px;margin-top:0}}
+@media (max-width:980px){.versions{grid-template-columns:repeat(2,minmax(0,1fr))}.versions li:nth-child(odd){padding-left:0;border-left:0}.versions li.now{padding-left:24px;margin-top:0}}
 @media (max-width:560px){.versions{grid-template-columns:minmax(0,1fr)}.versions li,.versions li + li{padding-left:0;border-left:0;border-top:1px solid var(--line)}.versions li:first-child{border-top:0}.versions li.now{padding-left:20px;padding-right:20px;margin-top:16px}}
 
+.gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:48px}
+@media (max-width:980px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.gallery{grid-template-columns:minmax(0,1fr)}}
+.gallery figure{margin:0;display:flex;flex-direction:column;gap:12px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 10px 14px}
+.gallery figure.cur{border-color:var(--ink)}
+.gallery img{width:100%;max-width:100%;height:auto;aspect-ratio:760/520;object-fit:cover;border-radius:8px;display:block;background:var(--night)}
+.gallery figcaption{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-inline:4px;font-size:15px}
+.gallery figcaption b{font-family:var(--display);font-weight:800;margin-right:6px}
+.gallery .st{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 7px;white-space:nowrap}
+.gallery .st.now{background:var(--sun);border-color:var(--sun);color:#1A1405}
+.gallery .st.built{color:var(--leaf);border-color:var(--leaf)}
+.gallery .btn{align-self:flex-start;margin-left:4px;padding:9px 14px;font-size:14px}
 /* the raise */
 .raise{background:var(--surface);border-block:1px solid var(--line)}
 .stages{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px;align-items:stretch}
@@ -314,10 +334,10 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
 </style>
 
 <header class="site night gut"><div class="wrap">
-  <a class="logo" href="#top" aria-label="GrowTech home"><img src="assets/growtech-logo.png" alt="GrowTech"><span class="v">V3 · SOLAR</span></a>
+  <a class="logo" href="#top" aria-label="GrowTech home"><img src="assets/growtech-logo.png" alt="GrowTech"><span class="v">V2 LIVE · V3 NEXT</span></a>
   <nav class="main" aria-label="Main">
     <a class="nl" href="#how">How it works</a>
-    <a class="nl" href="#journey">Our journey</a>
+    <a class="nl" href="#journey">Roadmap</a>
     <a class="nl" href="#raise">The raise</a>
     <a class="nl" href="#partners">Pilot</a>
     <a class="btn solid" href="#contact">Talk to us</a>
@@ -327,11 +347,12 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
 <div class="night">
 <main id="top">
 <div class="story" id="how">
-  <div class="stage" id="stage" aria-label="Live 3D model of a GrowTech solar vertical farm">
+  <div class="stage" id="stage" aria-label="Live 3D model of a GrowTech vertical farm">
     <canvas id="farm" aria-label="3D GrowTech farm. Drag to turn it; click a part to learn what it does. The parts list in the last chapter works with a keyboard."></canvas>
     <div class="labels" id="labels"></div>
     <div class="hud" aria-hidden="true"><span class="clock" id="clock">06:00</span><span class="sub" id="clockSub">Sunrise · typical day</span></div>
     <span class="tag">Live simulation · drag to turn</span>
+    <div class="verbadge" id="verBadge" hidden><b id="verName">v2</b><span id="verNote">Built · no solar, no sensors</span></div>
     <div class="gauges" aria-live="off">
       <div class="gauge sun"><span class="k">Panel</span><span class="v" id="gPanel">0<small>W</small></span></div>
       <div class="gauge load"><span class="k">Farm uses</span><span class="v" id="gLoad">0<small>W</small></span></div>
@@ -346,11 +367,11 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
 
   <div class="chapters">
     <article class="ch" data-view="overview" data-time="9.5" id="ch-hero">
-      <span class="eyebrow">GrowTech version 3 · Accra, Ghana</span>
-      <h1>Vertical farms that <em>power themselves</em></h1>
-      <p class="lede">A hydroponic vertical farm with its own solar panel on top. Start with one module in a backyard and grow to a commercial farm, with no grid and no generator. The farm beside this text is live: it is running its own day right now.</p>
+      <span class="eyebrow">GrowTech · Accra, Ghana</span>
+      <h1>Vertical farms that <em>run themselves</em></h1>
+      <p class="lede">Our goal is a hydroponic farm that looks after itself: it makes its own power, watches its water, decides what each crop needs, and seeds and harvests with a robot. We are building it one version at a time. Beside this text, v3 runs a simulated day.</p>
       <div class="row"><a class="btn solid" href="#ch-panel">See how it works <span class="arr">↓</span></a><a class="btn" href="#raise">The raise</a></div>
-      <div class="proof"><span><b>v1</b> 2023</span><span><b>v2</b> 2024</span><span><b>v3</b> building now</span></div>
+      <div class="proof"><span><b>v2</b> growing now</span><span><b>v3</b> solar, sensors, dashboard: this raise</span><span><b>v4 · v5</b> AI and robotics, the goal</span></div>
     </article>
 
     <article class="ch" data-view="panelnoon" id="ch-panel">
@@ -400,14 +421,31 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
       <div class="seg" role="group" aria-label="Farm size" id="sizeSeg">
         <button data-size="overview">1 module</button><button data-size="row">Row of 3</button><button data-size="stack">2 levels</button><button data-size="farm">3 × 2 farm</button>
       </div>
-      <p class="note">One module is about 2.1 m × 1.1 m × 1.8 m with 4 tiers (indicative).</p>
+      <p class="note">Sizes in the model are for illustration.</p>
+    </article>
+
+    <article class="ch" data-view="v2" id="ch-versions">
+      <span class="step">07 <b>Roadmap</b></span>
+      <h2>See every version, from v2 to v5</h2>
+      <p class="lede">Switch versions and the farm beside this text changes. v2 and v3 are real designs. v4 and v5 are future concepts that this raise does not fund.</p>
+      <div class="seg verseg" role="group" aria-label="Version" id="verSeg">
+        <button data-ver="v2">v2 Stacked</button><button data-ver="v3">v3 Solar</button><button data-ver="v4">v4 AI</button><button data-ver="v5">v5 Robotics</button>
+      </div>
+      <div class="vercopy" id="verCopy" aria-live="polite">
+        <div data-ver="v2"><b>v2 · Stacked, no solar</b><p>Our own stackable design. Each layer works on its own, so a stall can grow to four layers or come down to one. A pump in the bottom tank lifts nutrient water to the top layer, and it runs down through every layer and back to the tank. Here: one stall of tomatoes, one of peppers, fully grown.</p></div>
+        <div data-ver="v3" hidden><b>v3 · Solar, sensors, dashboard</b><p>The version this raise builds. The panel on top powers everything through a 24 V battery cabinet. Sensors watch the water and a live dashboard opens on any phone.</p></div>
+        <div data-ver="v4" hidden><b>v4 · AI <span class="concept">Future concept</span></b><p>Cameras on every tier and an AI that predicts harvest dates, spots disease early and says what to plant next. A screen on the farm shows it all, and pump, lights and nutrients run by themselves.</p></div>
+        <div data-ver="v5" hidden><b>v5 · Robotics <span class="concept">Future concept</span></b><p>A robot arm on rails does the hands-on work: planting seedlings, moving them as they grow, and harvesting into a crate. From seedling to harvest with little human effort.</p></div>
+      </div>
     </article>
 
     <article class="ch" data-view="overview" id="ch-explore">
-      <span class="step">07 <b>Your turn</b></span>
+      <span class="step">08 <b>Your turn</b></span>
       <h2>Explore the farm</h2>
       <p class="lede">Turn and zoom the model, click any part, change the weather or the battery, and speed up time.</p>
       <div class="ctl">
+        <span class="lab">Version</span>
+        <div class="seg verseg" role="group" aria-label="Version" id="verSeg2"><button data-ver="v2">v2</button><button data-ver="v3">v3</button><button data-ver="v4">v4</button><button data-ver="v5">v5</button></div>
         <span class="lab">Weather (peak sun hours)</span>
         <div class="seg" role="group" aria-label="Weather" id="wxSeg"><button data-wx="sunny">Sunny 5 h</button><button data-wx="typical">Typical 4 h</button><button data-wx="cloudy">Cloudy 2.5 h</button><button data-wx="rainy">Rainy 1 h</button></div>
         <span class="lab">Battery</span>
@@ -427,15 +465,23 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
 
 <section class="band gut" id="journey"><div class="wrap">
   <div class="head">
-    <div class="intro"><span class="eyebrow">Our journey</span><h2>Three versions, each one learning from the last</h2></div>
-    <p class="side">We started in 2023 with a small lettuce farm that taught us what goes wrong. Version 3 is the one that runs on its own sun. It is what this raise builds.</p>
+    <div class="intro"><span class="eyebrow">Product roadmap</span><h2>Five steps to a farm that runs itself</h2></div>
+    <p class="side">Each version takes over more of the work from the grower, and each one can be sold in its own right. v1 and v2 are built, and v3 is what this raise builds. v4 and v5 are where we are heading; this raise does not fund them.</p>
   </div>
   <ol class="versions">
-    <li><span class="yr">2023</span><span class="vn">v1</span><h3>First MVP</h3><p>A small hydroponic lettuce farm. A lot went wrong; we fixed what we could and kept notes on the rest.</p><span class="stat">~70% of the lettuce harvested</span></li>
-    <li><span class="yr">2024</span><span class="vn">v2</span><h3>Vertical racks</h3><p>Stacked PVC grow channels on steel racks, indoors under LED lights and outdoors in the sun. We grew bell peppers and habaneros.</p><span class="stat">Indoor + outdoor racks</span></li>
-    <li class="now"><span class="flag">This raise</span><span class="yr">2025 – 2027</span><span class="vn">v3</span><h3>Standalone solar module</h3><p>A scaffold module with the solar panel as its roof, a 24 V battery cabinet and a smart controller. It needs no grid power.</p><span class="stat">Plan, 3D model and firmware drafted · panel bought</span></li>
-    <li class="next"><span class="yr">2027</span><span class="vn">MVP</span><h3>Three partner pilots</h3><p>Three modules built from the proven v3 design, run on partner sites with our team supervising.</p><span class="stat">Raised separately, after v3 works</span></li>
+    <li><span class="yr">2023 · built</span><span class="vn">v1</span><h3>Single layer</h3><p>Hydroponics on one level; it could not stack. A lot went wrong with the first lettuce crop, and we fixed what we could.</p><span class="stat">~70% of the lettuce harvested</span></li>
+    <li><span class="yr">2024 · built</span><span class="vn">v2</span><h3>Stacked, no solar</h3><p>Our own stackable layers: each works on its own, and a pump sends nutrient water down through every layer. We grew bell peppers and habaneros.</p><span class="stat">Suits sites with good grid power</span></li>
+    <li class="now"><span class="flag">This raise</span><span class="yr">2025 – 2027</span><span class="vn">v3</span><h3>Solar, sensors, live dashboard</h3><p>A scaffold module with the solar panel as its roof and a 24 V battery cabinet. Sensors watch the water, temperature and nutrients, and a live dashboard opens on any phone, with SMS alerts.</p><span class="stat">Building now · Stage 1, GH₵ 60,000</span></li>
+    <li class="next"><span class="yr">Future</span><span class="vn">v4</span><h3>AI</h3><p>Crop recommendations, camera checks of plant health, and automatic control of water, light and nutrients.</p><span class="stat">Plan only · not funded by this raise</span></li>
+    <li class="next"><span class="yr">Future</span><span class="vn">v5</span><h3>Robotics</h3><p>Seeding, transplanting and harvesting.</p><span class="stat">Plan only · not funded by this raise</span></li>
   </ol>
+  <div class="gallery" aria-label="What each version looks like">
+    <figure><img src="assets/roadmap-v2.jpg" alt="v2: two stacked stalls with four layers each, one of fully grown tomatoes and one of peppers, with a water tank at the bottom" loading="lazy" width="760" height="520"><figcaption><span><b>v2</b> Stacked, no solar</span><span class="st built">Built</span></figcaption><button class="btn" data-open-ver="v2">Open in 3D <span class="arr">↑</span></button></figure>
+    <figure class="cur"><img src="assets/roadmap-v3.jpg" alt="v3: a four-tier module with a solar panel as its roof and a power cabinet on the end" loading="lazy" width="760" height="520"><figcaption><span><b>v3</b> Solar + sensors</span><span class="st now">This raise</span></figcaption><button class="btn" data-open-ver="v3">Open in 3D <span class="arr">↑</span></button></figure>
+    <figure><img src="assets/roadmap-v4.jpg" alt="v4 concept: the solar module with cameras on each tier, an AI screen on a stand and automatic nutrient dosing bottles" loading="lazy" width="760" height="520"><figcaption><span><b>v4</b> AI</span><span class="st">Concept</span></figcaption><button class="btn" data-open-ver="v4">Open in 3D <span class="arr">↑</span></button></figure>
+    <figure><img src="assets/roadmap-v5.jpg" alt="v5 concept: the solar module with a robot gantry on rails, a seedling tray and a harvest crate" loading="lazy" width="760" height="520"><figcaption><span><b>v5</b> Robotics</span><span class="st">Concept</span></figcaption><button class="btn" data-open-ver="v5">Open in 3D <span class="arr">↑</span></button></figure>
+  </div>
+  <p class="fine">Images are from our 3D model. v4 and v5 are future concepts that this raise does not fund.</p>
 </div></section>
 
 <section class="band raise gut" id="raise"><div class="wrap">
@@ -448,14 +494,14 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
       <div class="lab"><span>Stage 1</span><span class="st">● Raising now</span></div>
       <h3>Build the v3 working prototype</h3>
       <p>One complete standalone module, built, wired and grown on, then tested on solar alone for a full week and through a growing cycle.</p>
-      <div class="amount"><span class="k">Amount</span><span class="v" id="amt1">GH₵ 56,000</span><span class="k" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-size:14px">Build Dec 2026 – Jan 2027 · off-grid test and grow trial Feb 2027</span></div>
+      <div class="amount"><span class="k">Amount</span><span class="v" id="amt1">GH₵ 60,000</span><span class="k" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-size:14px">Build Dec 2026 – Jan 2027 · off-grid test and grow trial Feb 2027</span></div>
       <ul class="funds" aria-label="Use of funds, Stage 1">
-        <li><span>v3 parts, rework and spares</span><b>27,300</b><i style="width:48.7%"></i></li>
-        <li><span>Team part-time pay, 3 months</span><b>10,500</b><i style="width:18.7%"></i></li>
-        <li><span>Hired technicians and design</span><b>6,900</b><i style="width:12.3%"></i></li>
-        <li><span>Tools, transport, testing, grow trial</span><b>3,450</b><i style="width:6.2%"></i></li>
-        <li><span>Legal, accounting, v3 report</span><b>2,500</b><i style="width:4.5%"></i></li>
-        <li><span>Contingency</span><b>5,350</b><i style="width:9.6%"></i></li>
+        <li><span>v3 parts, sensors, dashboard, rework</span><b>28,350</b><i style="width:47.2%"></i></li>
+        <li><span>Team part-time pay, 3 months</span><b>10,500</b><i style="width:17.5%"></i></li>
+        <li><span>Hired technicians and design</span><b>6,900</b><i style="width:11.5%"></i></li>
+        <li><span>Tools, transport, testing, grow trial</span><b>3,450</b><i style="width:5.8%"></i></li>
+        <li><span>Legal, accounting, v3 report</span><b>2,500</b><i style="width:4.2%"></i></li>
+        <li><span>Contingency</span><b>8,300</b><i style="width:13.8%"></i></li>
       </ul>
     </article>
     <article class="stagecard second">
@@ -472,7 +518,7 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
     </article>
   </div>
   <div class="terms">
-    <div><b>What investors get</b><span>A share (equity) in GrowTech. Terms are set in a written agreement before any money changes hands.</span></div>
+    <div><b>What investors get</b><span>A SAFE (simple agreement for future equity). It is not a loan: your money turns into GrowTech shares at our next priced share round. The SAFE is signed before any money changes hands.</span></div>
     <div><b>How we report</b><span>Build photos, test logs and energy readings shared with every investor as each milestone is reached.</span></div>
     <div><b>The risk</b><span>This is an early-stage venture and it could fail. Please only invest an amount you could afford to lose.</span></div>
   </div>
@@ -540,11 +586,11 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
       <p class="body">As they worked, we saw what this could become: fresh food grown close to home, in very little space. Three versions later, we are making it run entirely on the sun, so it keeps growing whatever the grid does.</p>
     </div>
     <ul class="crew" aria-label="Team">
-      <li><b>Triumph</b><span>Owner</span></li>
-      <li><b>Isaac</b><span>Project lead</span></li>
-      <li><b>Hickman</b><span>Build and electrical</span></li>
-      <li><b>Ben</b><span>Build</span></li>
-      <li class="wide"><b>Gideon</b><span>Company mentor, consulted at every step</span></li>
+      <li><b>Triumph</b><span>Owner, director and technician</span></li>
+      <li><b>Isaac</b><span>Technical lead</span></li>
+      <li><b>Hickman</b><span>Project manager and technician</span></li>
+      <li><b>Ben</b><span>Technician</span></li>
+      <li class="wide"><b>Gideon</b><span>Mentor and supervisor, consulted at every step</span></li>
     </ul>
   </div>
   <figure class="render"><img src="assets/farm-render.png" alt="3D model of a GrowTech farm: six scaffold modules, three wide and two high, each with a solar panel on top"><figcaption>Six modules, three wide and two high · from our 3D model</figcaption></figure>
@@ -554,7 +600,7 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
   <div style="display:flex;flex-direction:column;gap:16px">
     <span class="eyebrow">Let's grow together</span>
     <h2>Talk to us about investing, or about your farm</h2>
-    <p>Call to ask about the raise, to arrange a visit to see v3 being built, or to get a quote for a farm.</p>
+    <p>Call to ask about the raise, arrange a visit to see v2 in operation, or get a quote for a farm.</p>
   </div>
   <div>
     <div class="phone" id="phone">(+233) 544198026</div>
@@ -565,9 +611,9 @@ footer.site .base{margin-top:56px;padding-top:20px;border-top:1px solid var(--ni
 
 <footer class="site gut"><div class="wrap">
   <div class="cols">
-    <div class="brand"><img src="assets/growtech-logo.png" alt="GrowTech"><p>Scalable hydroponic vertical farms that run entirely on solar power. Built, installed and maintained in Ghana.</p></div>
+    <div class="brand"><img src="assets/growtech-logo.png" alt="GrowTech"><p>Hydroponic vertical farms that run themselves, one version at a time. Built, installed and maintained in Ghana.</p></div>
     <div><h3>Explore</h3><ul><li><a href="#how">How it works</a></li><li><a href="#ch-scale">Farm sizes</a></li><li><a href="#ch-explore">Try the simulation</a></li></ul></div>
-    <div><h3>Investors</h3><ul><li><a href="#journey">Our journey</a></li><li><a href="#raise">The raise</a></li><li><a href="#partners">Pilot partners</a></li></ul></div>
+    <div><h3>Investors</h3><ul><li><a href="#journey">Roadmap</a></li><li><a href="#raise">The raise</a></li><li><a href="#partners">Pilot partners</a></li></ul></div>
     <div><h3>Visit or call</h3><ul><li>(+233) 544198026</li><li>Mon–Sat, 7 AM – 5 PM</li><li>Accra, Ghana</li><li><a href="https://www.instagram.com/growtechgh" target="_blank" rel="noopener">Instagram</a></li></ul></div>
   </div>
   <div class="base"><span>© 2026 Grow Technologies</span><span>Energy figures on this page are simulated planning figures.</span></div>
@@ -585,15 +631,49 @@ const GF = window.GrowFarm;
 if (!GF){ stage.insertAdjacentHTML('beforeend','<div class="stagefail">The live farm could not load. Check your connection and reload.</div>'); return; }
 const coarse = matchMedia('(pointer: coarse)').matches;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const farm = GF.mount({canvas:$('farm'), host:stage, labelsEl:$('labels'), zoom:false, onSelect:showPart, onFrame:tick});
+const farm = GF.mount({canvas:$('farm'), host:stage, labelsEl:$('labels'), zoom:false, onSelect:showPart, onFrame:tick, onVersion:onVersion});
 if (!farm.ok){ stage.insertAdjacentHTML('beforeend','<div class="stagefail">This browser cannot show 3D graphics. The rest of the page still works.</div>'); }
 const S = farm.S, sim = farm.sim, {battV, SHED, PARTS} = GF;
-if (!farm.ok){ let last=performance.now(); (function loop(now){ const dt=Math.min(0.1,(now-last)/1000); last=now; if(S.playing) sim.advance(dt*S.speed/60); tick(dt); requestAnimationFrame(loop); })(last); }
+if (!farm.ok){ let last=performance.now(); function loop(now){ const dt=Math.min(0.1,(now-last)/1000); last=now; if(S.playing) sim.advance(dt*S.speed/60); tick(dt); requestAnimationFrame(loop); } requestAnimationFrame(loop); }
 S.playing = !reduce; S.speed = 20;
 
 /* interaction: on touch screens the model only takes gestures in the last chapter, so the page still scrolls */
 function setTouch(on){ if (!farm.ok) return; farm.setInteractive(on || !coarse, on); $('farm').style.touchAction = (on || !coarse) ? 'none' : 'pan-y'; if (coarse) farm.controls.enabled = on; }
 setTouch(false);
+
+/* parts list and versions: v2 to v5 */
+const PARTSETS = {
+  v2:['layers','loop','tomato','pepper'],
+  v3:['panel','rack','tray','leds','fans','tank','sensors','wiring','mppt','battery','control'],
+  v4:['panel','cams','screen','dosing','sensors','wiring','battery'],
+  v5:['panel','robot','cams','screen','dosing','wiring']
+};
+function buildPartlist(ver){
+  $('partlist').textContent = '';
+  for (const k of PARTSETS[ver]){
+    const b=document.createElement('button'); b.dataset.part=k; b.textContent=PARTS[k].name.replace(' and pump','').replace(' on top',''); b.setAttribute('aria-pressed','false');
+    b.addEventListener('click', ()=>{ if (farm.select) farm.select(k, true); else showPart(k); });
+    $('partlist').appendChild(b);
+  }
+}
+buildPartlist('v3');
+
+/* versions: v2 to v5 */
+let pickedVer = 'v2';
+const VERNOTE = {v2:'Built · no solar, no sensors', v3:'Building now · this raise', v4:'Future concept · not funded by this raise', v5:'Future concept · not funded by this raise'};
+function onVersion(ver){
+  stage.classList.toggle('v2', ver==='v2');
+  const showBadge = ver !== 'v3' || (active && active.id === 'ch-versions');
+  $('verBadge').hidden = !showBadge; stage.classList.toggle('hasbadge', showBadge);
+  $('verBadge').classList.toggle('isconcept', ver==='v4' || ver==='v5');
+  $('verName').textContent = ver; $('verNote').textContent = VERNOTE[ver];
+  document.querySelectorAll('#verCopy > div').forEach(d=>d.hidden = d.dataset.ver !== ver);
+  press('verSeg','ver',ver); press('verSeg2','ver',ver);
+  buildPartlist(ver);
+}
+function pickVersion(ver){ pickedVer = ver; if (farm.setView) farm.setView(ver); else onVersion(ver); }
+document.querySelectorAll('.verseg button').forEach(b=>b.addEventListener('click',()=>pickVersion(b.dataset.ver)));
+document.querySelectorAll('[data-open-ver]').forEach(b=>b.addEventListener('click',()=>{ pickedVer = b.dataset.openVer; $('ch-versions').scrollIntoView({behavior: reduce?'auto':'smooth', block:'center'}); pickVersion(pickedVer); }));
 
 /* chapters drive the farm */
 const chapters = [...document.querySelectorAll('.ch')];
@@ -605,11 +685,13 @@ function activate(ch, instant){
   const explore = ch.id === 'ch-explore';
   setTouch(explore);
   if (ch.id === 'ch-scale'){ const cur = document.querySelector('#sizeSeg [aria-pressed="true"]'); farm.setView(cur ? cur.dataset.size : 'row', instant); }
+  else if (ch.id === 'ch-versions') farm.setView(pickedVer, instant);
   else if (!explore) farm.setView(ch.dataset.view, instant);
   if (ch.dataset.time) S.T = Math.floor(S.T/24)*24 + (+ch.dataset.time);
   if (ch.id === 'ch-cloud' && S.speed < 120) S.speed = 120;
   if (ch.id !== 'ch-cloud' && ch.id !== 'ch-explore' && S.speed > 30) S.speed = 20;
   farm.autoRotate = ch.id === 'ch-hero';
+  if (farm.version) onVersion(farm.version);
 }
 const io = new IntersectionObserver(es=>{ es.forEach(e=>{ if (e.isIntersecting) activate(e.target); }); }, {rootMargin:'-45% 0px -45% 0px'});
 chapters.forEach(c=>io.observe(c));
@@ -624,11 +706,7 @@ function showPart(key){
   $('part').hidden = false; $('pLive').textContent = farm.liveText ? farm.liveText() : '';
 }
 $('partClose').addEventListener('click', ()=>farm.select ? farm.select(null) : showPart(null));
-for (const k of ['panel','rack','tray','leds','fans','tank','wiring','mppt','battery','control']){
-  const b=document.createElement('button'); b.dataset.part=k; b.textContent=PARTS[k].name.replace(' and pump','').replace(' on top',''); b.setAttribute('aria-pressed','false');
-  b.addEventListener('click', ()=>{ if (farm.select) farm.select(k, true); else showPart(k); });
-  $('partlist').appendChild(b);
-}
+
 
 /* controls */
 function press(segId, attr, val){ document.querySelectorAll('#'+segId+' button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset[attr]===String(val)))); }
@@ -647,7 +725,7 @@ $('copyPhone').addEventListener('click', ()=>{
   try { navigator.clipboard.writeText(t).then(done, ()=>selectPhone()); } catch(e){ selectPhone(); }
   function selectPhone(){ const r=document.createRange(); r.selectNodeContents($('phone')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }
 });
-press('sizeSeg','size','row'); press('wxSeg','wx',S.wx); press('batSeg','ah',S.ah); press('speedSeg','speed',30);
+press('verSeg','ver','v2'); press('verSeg2','ver','v3'); press('sizeSeg','size','row'); press('wxSeg','wx',S.wx); press('batSeg','ah',S.ah); press('speedSeg','speed',30);
 $('play').textContent = S.playing?'Pause':'Play';
 
 /* readouts on the stage */
@@ -672,5 +750,3 @@ function tick(dt){
 acc = 1; tick(0);
 })();
 </script>
-
-</html>

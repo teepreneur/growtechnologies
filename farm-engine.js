@@ -80,7 +80,7 @@ function createSim(){
 /* ---------- Parts ---------- */
 const PARTS = {
   panel:{name:"Solar panel on top", role:"Makes the power", does:"Sits on top of the stack like a roof, so it takes no extra floor space. It turns sunlight into DC power. Its voltage can reach 45–50 V, so it always goes through the charge controller, never straight to the farm.", spec:"~450 W mono half-cut panel per module, tilted ~12°"},
-  rack:{name:"Scaffold module", role:"Grows up and out", does:"A scaffolding frame of standard tubes and couplers. Modules join side by side or stack on top of each other, so a farm can be as large and as high as the site allows.", spec:"One module ~2.1 m × 1.1 m × 1.8 m, 4 tiers (indicative size)"},
+  rack:{name:"Scaffold module", role:"Grows up and out", does:"A sturdy frame that joins side by side with the next module, so a farm can be as large as the site allows.", spec:"4 growing tiers per module"},
   tray:{name:"Grow channels", role:"Where crops grow", does:"Plants sit in net pots. A thin film of nutrient water flows past the roots and drains back to the tank. No soil, so the farm is clean and suits leafy greens and herbs.", spec:"4 channels per tier · 32 plant sites per tier in this model"},
   leds:{name:"LED grow lights", role:"Extends the growing day", does:"Add light in the evening and on cloudy days, and under the panel roof. The controller switches them off second when the battery is low.", spec:"~60 W per module, example schedule 15:00–23:00 (assumption)"},
   fans:{name:"Circulation fans", role:"Keeps plants cool", does:"Move air around the leaves to cool them, strengthen stems and reduce mould. The first load the controller switches off when the battery is low.", spec:"~10 W per module, example schedule 08:00–20:00 (assumption)"},
@@ -88,7 +88,22 @@ const PARTS = {
   wiring:{name:"Power cabinet", role:"Power in a small space", does:"A lockable cabinet on the end of the frame holds the battery, charge controller and ESP32. The power system takes almost no floor space and the cable from the panel above is short.", spec:"6 / 10 / 16 mm² cable · 32 A PV breaker · 40 A and 60 A fuses · frame earthed"},
   mppt:{name:"MPPT charge controller", role:"Manages charging", does:"Pulls the most power from the panel as the light changes and charges the battery at the right voltages for LiFePO4. It only runs with the battery connected.", spec:"30–40 A, PV input ≥ 100 V · absorb 28.4 V, float 27.0 V"},
   battery:{name:"24 V LiFePO4 battery", role:"Stores the power", does:"Stores the daytime surplus so the farm runs at night and through cloudy spells. Its built-in BMS protects the cells. It sits at the bottom of the power cabinet, away from the water.", spec:"25.6 V, 100 Ah (2.56 kWh), or 50 Ah if tests allow · 60 A fuse within 20 cm of +"},
-  control:{name:"ESP32 controller", role:"The farm's brain", does:"Measures battery voltage and current through an INA226 sensor and a shunt. It runs the pump and switches loads off in order when the battery is low: fans first, then LEDs. The pump always runs.", spec:"ESP32 + INA226 on 50 A / 75 mV shunt · MOSFET switches · IP65 box"}
+  control:{name:"ESP32 controller", role:"The farm's brain", does:"Measures battery voltage and current through an INA226 sensor and a shunt. It runs the pump and switches loads off in order when the battery is low: fans first, then LEDs. The pump always runs. It also serves the live dashboard to any phone nearby.", spec:"ESP32 + INA226 on 50 A / 75 mV shunt · MOSFET switches · IP65 box"},
+  sensors:{name:"Water sensors", role:"v3 · Watches the water", does:"Probes in the tank measure nutrient strength, pH and water temperature. The readings appear on the live dashboard, so the team sees a problem before the plants do.", spec:"EC, pH and temperature probes"},
+  layers:{name:"Stackable layers", role:"v2 · Our own design", does:"Each layer is a complete growing unit that works on its own. Layers stack on top of each other, and a stall can be taken down to a single layer without changing anything else.", spec:"4 layers shown · no solar, no sensors"},
+  loop:{name:"Water loop", role:"v2 · Feeds every layer", does:"A pump in the bottom tank lifts nutrient water to the top layer. It runs through each layer in turn, down to the next, and back to the tank, round and round.", spec:"Pump runs on mains power in v2"},
+  tomato:{name:"Tomato stall", role:"v2 · Fruiting crop", does:"Tomatoes grown to full size, staked and fruiting on every layer.", spec:"Fully grown crop, shown for illustration"},
+  pepper:{name:"Pepper stall", role:"v2 · Fruiting crop", does:"Bell peppers and chillies grown to full size on every layer. We grew peppers on v2 in 2024.", spec:"Fully grown crop, shown for illustration"},
+  cams:{name:"AI cameras", role:"v4 concept · Sees every plant", does:"A camera on each tier photographs the plants through the day. The AI spots disease, stress and pests early and predicts when each tier will be ready to harvest.", spec:"Future concept, not funded by this raise"},
+  screen:{name:"AI farm screen", role:"v4 concept · Predicts and advises", does:"A screen on the farm shows the AI's predictions: harvest dates, health alerts, what to plant next and the nutrient plan. Owners can also make changes from it.", spec:"Future concept, not funded by this raise"},
+  dosing:{name:"Automatic dosing", role:"v4 concept · Hands-free feeding", does:"Small pumps add nutrients and pH correction to the tank by themselves, guided by the sensors and the AI. Pump and lights are also controlled automatically.", spec:"Future concept, not funded by this raise"},
+  robot:{name:"Robot gantry", role:"v5 concept · Seedling to harvest", does:"A robot arm on rails moves up and along the farm. It plants seedlings, moves them as they grow and harvests the crop into a crate.", spec:"Future concept, not funded by this raise"}
+};
+const VERSIONS = {
+  v2:{name:"v2 · Stacked, no solar", short:"Stacked"},
+  v3:{name:"v3 · Solar, sensors, dashboard", short:"Solar"},
+  v4:{name:"v4 · AI (concept)", short:"AI", concept:true},
+  v5:{name:"v5 · Robotics (concept)", short:"Robotics", concept:true}
 };
 
 /* ---------- Scene ---------- */
@@ -102,7 +117,11 @@ function mount(opts){
   const api = {S, sim, PARTS, ok:false};
   if (!THREE || !THREE.OrbitControls) return api;
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true}); } catch(e){ return api; }
+  /* try full quality first, then a lighter context (some browsers or GPUs refuse antialias or run out of contexts) */
+  for (const opts of [{antialias:true, preserveDrawingBuffer:true}, {antialias:false}, {antialias:false, powerPreference:'low-power'}]){
+    try { renderer = new THREE.WebGLRenderer(Object.assign({canvas}, opts)); break; } catch(e){ renderer = null; }
+  }
+  if (!renderer) return api;
   api.ok = true;
   const V = (x,y,z)=>new THREE.Vector3(x,y,z);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
@@ -292,6 +311,174 @@ function mount(opts){
     mk('pv', pvPts(0), 14); mk('mb', mbPts, 5); mk('bb', bbPts, 5); mk('ld', ldPts, 10);
     anim.pvPaths = {1:anim.energy.pv.pl, 2:polyline(pvPts(H).map(p=>p.clone().add(V(0.012,0.012,0))))}; }
 
+  // v3: water sensors in the tank
+  const sensors = group('sensors', basePart);
+  [[0x2f7fd0,-0.05],[0xc0392b,0.07],[0xe0a526,0.19]].forEach(([c,x])=>{ cyl(0.008,0.32,M(0x2a2f33),x,0.3,0.22,sensors,8); cyl(0.022,0.05,M(c),x,0.47,0.22,sensors,12); });
+  tube([V(-0.05,0.5,0.22),V(0.3,0.62,0.3),V(0.8,0.75,0.3),V(1.08,0.9,0.3)],0.006,grey,sensors);
+
+  /* ----- v4 concept: cameras, AI screen, automatic dosing (on the v3 module) ----- */
+  const v4G = new THREE.Group(); mod.add(v4G);
+  const cams = group('cams', v4G);
+  anim.scan = [];
+  TIERS.forEach((y,i)=>{
+    const cg = new THREE.Group(); cg.position.set(i%2?0.45:-0.45, y+0.31, D/2+0.03); cams.add(cg);
+    box(0.09,0.06,0.07,M(0x1d2327,{roughness:0.4}),0,0,0,cg);
+    const lens = cyl(0.022,0.03,M(0x0c1114,{metalness:0.6, roughness:0.2}),0,-0.01,-0.045,cg,14); lens.rotation.x=Math.PI/2;
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.008,8,6), new THREE.MeshBasicMaterial({color:0x58ff8a})); dot.position.set(0.03,0.02,0.036); cg.add(dot);
+    const cm = new THREE.MeshBasicMaterial({color:0x6fe0ff, transparent:true, opacity:0.1, depthWrite:false, side:THREE.DoubleSide});
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.42,0.75,24,1,true), cm);
+    cone.position.set(0,-0.12,-0.36); cone.rotation.x = Math.PI/2 - 0.3; cg.add(cone); anim.scan.push({m:cm, ph:i*0.7});
+  });
+  const scr = group('screen', v4G);
+  rod(V(-1.75,0,0.35), V(-1.75,1.05,0.35), 0.03, M(0x2b3236,{metalness:0.5}), scr);
+  box(0.36,0.03,0.36,M(0x2b3236),-1.75,0.015,0.35,scr);
+  function drawScreen(c,w,h){
+    const Lt = S.last || {on:{}};
+    c.fillStyle='#0b1a14'; c.fillRect(0,0,w,h);
+    c.fillStyle='#163327'; c.fillRect(0,0,w,46);
+    c.fillStyle='#f7b731'; c.font='bold 22px monospace'; c.fillText('GrowTech AI', 18, 31);
+    c.fillStyle='#98afa2'; c.font='16px monospace'; c.fillText('concept', w-96, 30);
+    const rows = [
+      ['Harvest', 'Tier 2 lettuce in 6 days', '#79d19b'],
+      ['Health', 'Tier 3: leaf spot, 2 plants', '#ff9a70'],
+      ['Plant next', 'Basil on tier 1', '#e6efe8'],
+      ['Nutrients', 'EC 1.8 · pH 6.0 · auto', '#8dbdf0'],
+      ['Power', Math.round(S.soc*100)+'% battery · pump '+(Lt.on.pump?'on':'off'), '#f7b731']
+    ];
+    rows.forEach(([k,v,col],i)=>{ const y=84+i*46; c.fillStyle='#98afa2'; c.font='15px monospace'; c.fillText(k.toUpperCase(),18,y); c.fillStyle=col; c.font='bold 20px monospace'; c.fillText(v,18,y+22); });
+  }
+  const scrTex = canvasTex(400,320,drawScreen);
+  const scrM = M(0x111417,{roughness:0.4});
+  const sb = new THREE.Mesh(new THREE.BoxGeometry(0.62,0.5,0.035),[scrM,scrM,scrM,scrM,new THREE.MeshBasicMaterial({map:scrTex}),scrM]);
+  sb.position.set(-1.75,1.3,0.35); sb.rotation.set(-0.1,0.75,0); sb.castShadow=true; scr.add(sb);
+  anim.screen = {tex:scrTex, draw:drawScreen, t:0};
+  const dosing = group('dosing', v4G);
+  box(0.42,0.04,0.16,M(0x2b3236),-0.55,0.06,0.5,dosing);
+  [[0x3f9b4f,-0.68],[0x7a4fb0,-0.55],[0xc0392b,-0.42]].forEach(([c,x])=>{ cyl(0.04,0.15,new THREE.MeshStandardMaterial({color:c, transparent:true, opacity:0.75, roughness:0.2}),x,0.16,0.5,dosing,14); cyl(0.016,0.03,M(0x1d2224),x,0.25,0.5,dosing,10); tube([V(x,0.26,0.5),V(x,0.32,0.42),V(x+0.1,0.3,0.32)],0.005,grey,dosing); });
+
+  /* ----- v5 concept: robot gantry, seedling tray, harvest crate ----- */
+  const v5G = new THREE.Group(); mod.add(v5G);
+  const robot = group('robot', v5G);
+  const railM = M(0xd9dde0,{metalness:0.6, roughness:0.3}), robM = M(0xf2a900,{metalness:0.3, roughness:0.45}), robD = M(0x1d2327,{roughness:0.5});
+  const RZ = D/2+0.2, RX = [-1.16, 0.98];
+  for (const x of RX){ box(0.05,1.95,0.05,railM,x,0.975,RZ,robot); box(0.16,0.02,0.16,coupler,x,0.01,RZ,robot); }
+  box(2.2,0.05,0.05,railM,(RX[0]+RX[1])/2,1.97,RZ,robot);
+  const beam = new THREE.Group(); robot.add(beam);
+  box(2.18,0.06,0.07,robM,(RX[0]+RX[1])/2,0,0,beam).position.z=RZ;
+  const carr = new THREE.Group(); beam.add(carr); carr.position.z = RZ;
+  box(0.16,0.14,0.12,robD,0,0,0,carr);
+  const arm = new THREE.Group(); carr.add(arm);
+  const armSeg = box(0.045,0.045,1,robM,0,0,0,arm);
+  const grip = new THREE.Group(); arm.add(grip);
+  box(0.09,0.04,0.05,robD,0,0,0,grip);
+  for (const s of [-1,1]) box(0.012,0.06,0.05,robD,s*0.035,-0.035,-0.02,grip);
+  const held = new THREE.Mesh(new THREE.SphereGeometry(0.05,12,10), M(0x5aa83c)); held.position.set(0,-0.06,-0.02); held.scale.y=0.7; grip.add(held);
+  const tray = group('robot', v5G);
+  box(0.6,0.06,0.36,M(0x2b3236),-0.55,0.03,1.25,tray);
+  for (let i=0;i<5;i++) for (let j=0;j<3;j++){ const s=new THREE.Mesh(new THREE.SphereGeometry(0.018,8,6), M(0x86c75a)); s.position.set(-0.78+i*0.115,0.075,1.15+j*0.1); s.scale.y=1.4; tray.add(s); }
+  const crate = group('robot', v5G);
+  const crM = M(0x2f6b45,{roughness:0.6});
+  box(0.5,0.02,0.36,crM,0.45,0.04,1.25,crate); box(0.5,0.22,0.02,crM,0.45,0.14,1.07,crate); box(0.5,0.22,0.02,crM,0.45,0.14,1.43,crate); box(0.02,0.22,0.36,crM,0.2,0.14,1.25,crate); box(0.02,0.22,0.36,crM,0.7,0.14,1.25,crate);
+  for (let i=0;i<7;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(0.07,10,8), M(greens[i%5].getHex())); s.position.set(0.3+(i%4)*0.1,0.17,1.17+Math.floor(i/4)*0.15); s.scale.y=0.7; crate.add(s); }
+  // pick-and-place cycle: seedling tray → a tier → harvest from a tier → crate
+  const RW = [
+    {x:-0.55, y:0.35, r:0.95, h:0}, {x:-0.55, y:0.2, r:0.95, h:1}, {x:-0.6, y:TIERS[1]+0.16, r:0.38, h:1}, {x:-0.6, y:TIERS[1]+0.16, r:0.6, h:0},
+    {x:0.35, y:TIERS[3]+0.16, r:0.38, h:0}, {x:0.35, y:TIERS[3]+0.16, r:0.6, h:2}, {x:0.45, y:0.4, r:0.95, h:2}, {x:0.45, y:0.3, r:0.95, h:0}
+  ];
+  anim.robot = {t:0, beam, carr, arm, armSeg, grip, held};
+  function poseRobot(t){
+    const n = RW.length, seg = 1.6, k = (t/seg)%n, i = Math.floor(k), f = k-i, e = f<0.5?2*f*f:1-Math.pow(-2*f+2,2)/2;
+    const a = RW[i], b = RW[(i+1)%n], x = a.x+(b.x-a.x)*e, y = a.y+(b.y-a.y)*e, r = a.r+(b.r-a.r)*e;
+    beam.position.y = y; carr.position.x = x;
+    // arm reaches from the gantry (z = RZ) toward the crop (r = distance into the frame, or out to the ground trays)
+    const toward = r > 0.8 ? 1 : -1, len = r > 0.8 ? Math.max(0.05, 1.25-RZ) : r;
+    armSeg.scale.z = len; armSeg.position.z = toward*len/2; grip.position.z = toward*len;
+    held.visible = (f<0.5?a.h:b.h) > 0; held.material.color.setHex((f<0.5?a.h:b.h) === 2 ? 0x3f8f35 : 0x9ad36a); held.scale.setScalar((f<0.5?a.h:b.h) === 2 ? 1.25 : 0.55); held.scale.y *= 0.7;
+  }
+  poseRobot(0);
+
+  /* ----- v2: two stacked stalls, no solar, no sensors ----- */
+  const v2G = new THREE.Group(); scene.add(v2G);
+  const SW = 1.3, SD = 0.62, LH = 0.5, NL = 4, SB = 0.32, SC = [-0.85, 0.85];
+  const frameV2 = M(0x2f4a3a,{metalness:0.45, roughness:0.45}), joint = M(0xf2a900,{metalness:0.3, roughness:0.4});
+  const v2Top = SB + NL*LH;
+  anim.v2water = [];
+  function plantMeshes(kind, n){
+    const leafG = new THREE.SphereGeometry(0.04, 9, 7), fruitG = new THREE.SphereGeometry(1, 10, 8);
+    const stems = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.006,0.008,1,6), M(kind==='tomato'?0xc9b27a:0x4f7a35), n);
+    const leaves = new THREE.InstancedMesh(leafG, M(0xffffff,{roughness:0.85}), n*16);
+    const fruit = new THREE.InstancedMesh(fruitG, M(0xffffff,{roughness:0.3}), n*9);
+    leaves.castShadow = true; fruit.castShadow = true;
+    return {stems, leaves, fruit, si:0, li:0, fi:0};
+  }
+  const leafCols = [0x2f6f2a,0x3e8432,0x356f2c,0x4a8f3a].map(c=>new THREE.Color(c));
+  const tomCols = [0xd7301f,0xe0442a,0xc62a1d,0xec7b2c].map(c=>new THREE.Color(c));
+  const pepCols = [0xc62828,0xf2c12e,0x3f8f2e,0xe0602a].map(c=>new THREE.Color(c));
+  function addPlant(P, kind, x, y, z){
+    const tall = kind==='tomato' ? 0.42+Math.random()*0.04 : 0.32+Math.random()*0.05;
+    dummy.rotation.set(0,0,0); dummy.position.set(x, y+tall/2, z); dummy.scale.set(1,tall,1); dummy.updateMatrix(); P.stems.setMatrixAt(P.si++, dummy.matrix);
+    for (let l=0;l<16;l++){
+      const h = (l+0.5)/16, a = l*2.4+Math.random()*0.5, rr = kind==='tomato' ? 0.04+0.025*Math.sin(h*Math.PI) : 0.03+0.06*Math.sin(h*Math.PI*0.9);
+      dummy.position.set(x+Math.cos(a)*rr, y+0.05+h*tall*0.92, z+Math.sin(a)*rr*0.8);
+      const s = kind==='tomato' ? 0.75+Math.random()*0.3 : 0.85+Math.random()*0.3;
+      dummy.scale.set(s*1.3, s*0.45, s*0.8); dummy.rotation.set(0.3*Math.sin(a),a,0); dummy.updateMatrix();
+      P.leaves.setMatrixAt(P.li, dummy.matrix); P.leaves.setColorAt(P.li++, leafCols[((l+Math.floor(x*10))%4+4)%4]);
+    }
+    for (let f=0;f<9;f++){
+      const a = f*2.0+Math.random()*0.6, h = kind==='tomato' ? 0.15+0.7*(f/8) : 0.2+0.6*Math.random();
+      const rr = kind==='tomato' ? 0.075 : 0.085;
+      dummy.position.set(x+Math.cos(a)*rr, y+0.03+h*tall, z+Math.sin(a)*rr*0.85); dummy.rotation.set(0,0,0);
+      if (kind==='tomato'){ const s = 0.026+Math.random()*0.01; dummy.scale.set(s,s*0.9,s); }
+      else { const s = 0.022+Math.random()*0.008; dummy.scale.set(s,s*1.8,s); dummy.position.y -= 0.02; }
+      dummy.updateMatrix(); P.fruit.setMatrixAt(P.fi, dummy.matrix);
+      const cols = kind==='tomato' ? tomCols : pepCols; P.fruit.setColorAt(P.fi++, cols[kind==='tomato' ? (f%6===5?3:f%3) : (Math.floor(x*7+y*5+f)%4+4)%4]);
+    }
+  }
+  function buildStall(cx, kind){
+    const st = new THREE.Group(); st.position.x = cx; v2G.add(st);
+    const lay = group('layers', st), loop = group('loop', st), crop = group(kind, st);
+    // stand and tank
+    for (const sx of [-1,1]) for (const sz of [-1,1]) rod(V(sx*SW/2,0,sz*SD/2), V(sx*SW/2,SB,sz*SD/2), 0.02, frameV2, lay);
+    const tk = new THREE.Mesh(new THREE.BoxGeometry(SW-0.12,0.24,SD-0.1), new THREE.MeshStandardMaterial({color:0x2d6a86, transparent:true, opacity:0.45, roughness:0.3}));
+    tk.position.set(0,0.14,0); loop.add(tk);
+    box(SW-0.16,0.16,SD-0.14,new THREE.MeshStandardMaterial({color:0x3a9fd8, transparent:true, opacity:0.7, roughness:0.15}),0,0.1,0,loop);
+    cyl(0.04,0.08,M(0x22282b),-SW/2+0.16,0.08,-SD/2+0.12,loop,14);
+    // layers: each one a complete unit (frame + channel) sitting on the one below
+    const P = plantMeshes(kind, NL*6);
+    for (let l=0;l<NL;l++){
+      const y0 = SB + l*LH;
+      for (const sx of [-1,1]) for (const sz of [-1,1]){
+        rod(V(sx*SW/2,y0,sz*SD/2), V(sx*SW/2,y0+LH,sz*SD/2), 0.017, frameV2, lay);
+        box(0.055,0.05,0.055,joint,sx*SW/2,y0+0.02,sz*SD/2,lay);
+      }
+      for (const sz of [-1,1]) rod(V(-SW/2,y0+0.04,sz*SD/2), V(SW/2,y0+0.04,sz*SD/2), 0.014, frameV2, lay);
+      for (const sx of [-1,1]) rod(V(sx*SW/2,y0+0.04,-SD/2), V(sx*SW/2,y0+0.04,SD/2), 0.014, frameV2, lay);
+      box(SW-0.1,0.09,SD-0.16,pvc,0,y0+0.1,0,lay);
+      box(SW-0.16,0.012,SD-0.22,new THREE.MeshStandardMaterial({color:0x3a9fd8, transparent:true, opacity:0.55, roughness:0.15}),0,y0+0.15,0,loop);
+      for (const z of [-0.12,0.12]) for (let k=0;k<3;k++) addPlant(P, kind, -0.4+k*0.4, y0+0.15, z);
+      // drain from this layer to the one below, at alternating ends
+      const ex = (l%2===0 ? -1 : 1)*(SW/2-0.1);
+      tube([V(ex,y0+0.09,SD/2-0.12), V(ex,y0-LH+0.2 > SB ? y0-LH+0.2 : 0.22, SD/2-0.12)],0.016,white,loop);
+    }
+    crop.add(P.stems, P.leaves, P.fruit);
+    // riser: pump up to the top layer
+    const rx = -SW/2+0.16, rz = -SD/2+0.12, topY = SB + (NL-1)*LH + 0.16;
+    tube([V(rx,0.12,rz),V(rx,0.3,rz),V(-SW/2-0.05,0.4,rz),V(-SW/2-0.05,topY+0.06,rz),V(rx+0.06,topY+0.06,rz)],0.014,hose,loop);
+    // the water path: up the riser, along the top layer, down a drain, along the next layer ... back to the tank
+    const path = [V(rx,0.1,rz),V(-SW/2-0.05,0.4,rz),V(-SW/2-0.05,topY+0.06,rz),V(rx+0.06,topY,rz)];
+    for (let l=NL-1;l>=0;l--){
+      const y = SB + l*LH + 0.16, dir = (NL-1-l)%2===0 ? 1 : -1;
+      const xa = -dir*(SW/2-0.14), xb = dir*(SW/2-0.14);
+      path.push(V(xa,y,0), V(xb,y,0), V(xb,y,SD/2-0.12), V(xb, l>0 ? y-LH+0.02 : 0.2, SD/2-0.12));
+    }
+    path.push(V(0,0.16,0), V(rx,0.1,rz));
+    const pl = polyline(path), wMat = new THREE.MeshBasicMaterial({color:0x6cc8ff}), wGeo = new THREE.SphereGeometry(0.014,8,6);
+    for (let i=0;i<90;i++){ const m=new THREE.Mesh(wGeo,wMat); st.add(m); anim.v2water.push({m, pl, u:i/90, dz:(Math.random()-0.5)*0.2}); }
+    return st;
+  }
+  buildStall(SC[0], 'tomato'); buildStall(SC[1], 'pepper');
+  v2G.visible = false; v4G.visible = false; v5G.visible = false;
+
   /* ----- scaling: clones of the module ----- */
   const extras = new THREE.Group(); scene.add(extras);
   api.mode = {cols:1, levels:1};
@@ -311,24 +498,54 @@ function mount(opts){
   api.setMode = setMode;
 
   /* ----- labels ----- */
-  const LABELS = [
-    ['panel','Solar panel on top',V(-0.4,2.32,0.2),true],
-    ['rack','Scaffold module',V(-L/2,1.95,D/2),false],
-    ['wiring','Power cabinet',V(1.3,1.28,0.3),false],
-    ['battery','Battery',V(1.32,0.42,0.12),false],
-    ['mppt','Charge controller',V(1.32,0.74,-0.36),false],
-    ['leds','LED grow lights',V(-0.3,1.79,D/2),false],
-    ['fans','Fans',V(0.5,1.28,-D/2),false],
-    ['tank','Tank and pump',V(-0.4,0.4,0.4),false]
-  ];
+  const LABELSETS = {
+    v3:[
+      ['panel','Solar panel on top',V(-0.4,2.32,0.2),true],
+      ['rack','Scaffold module',V(-L/2,1.95,D/2),false],
+      ['wiring','Power cabinet',V(1.3,1.28,0.3),false],
+      ['battery','Battery',V(1.32,0.42,0.12),false],
+      ['mppt','Charge controller',V(1.32,0.74,-0.36),false],
+      ['leds','LED grow lights',V(-0.3,1.79,D/2),false],
+      ['fans','Fans',V(0.5,1.28,-D/2),false],
+      ['tank','Tank and pump',V(-0.4,0.4,0.4),false],
+      ['sensors','Water sensors',V(0.07,0.55,0.3),false]
+    ],
+    v2:[
+      ['tomato','Tomato stall',V(SC[0],v2Top+0.22,0),false],
+      ['pepper','Pepper stall',V(SC[1],v2Top+0.22,0),false],
+      ['layers','Stackable layers',V(SC[1]+SW/2,SB+2*LH+0.03,SD/2),false],
+      ['loop','Water loop',V(SC[0]-SW/2-0.05,SB+1.4*LH,-SD/2+0.12),false],
+      ['loop','Pump in the tank',V(SC[0],0.3,SD/2),false]
+    ],
+    v4:[
+      ['panel','Solar panel on top',V(-0.4,2.32,0.2),true],
+      ['cams','AI camera on every tier',V(0.45,TIERS[2]+0.4,D/2+0.03),false],
+      ['screen','AI farm screen',V(-1.75,1.62,0.35),false],
+      ['dosing','Automatic dosing',V(-0.55,0.32,0.55),false],
+      ['wiring','Power cabinet',V(1.3,1.28,0.3),false]
+    ],
+    v5:[
+      ['panel','Solar panel on top',V(-0.4,2.32,0.2),true],
+      ['robot','Robot gantry',V(-1.16,2.05,D/2+0.2),false],
+      ['robot','Seedlings',V(-0.55,0.16,1.25),false],
+      ['robot','Harvest crate',V(0.45,0.32,1.25),false],
+      ['cams','AI cameras',V(0.45,TIERS[2]+0.4,D/2+0.03),false]
+    ]
+  };
+  let LABELS = LABELSETS.v3;
   const labelsEl = opts.labelsEl; let labelEls = [];
-  if (labelsEl){ labelEls = LABELS.map(([k,t])=>{ const d=document.createElement('div'); d.className='lbl'; d.textContent=t; labelsEl.appendChild(d); return d; }); }
+  function buildLabels(){
+    if (!labelsEl) return;
+    labelEls.forEach(d=>d.remove());
+    labelEls = LABELS.map(([k,t])=>{ const d=document.createElement('div'); d.className='lbl'; d.textContent=t; labelsEl.appendChild(d); return d; });
+  }
+  buildLabels();
   api.showLabels = true;
   const tmpV = new THREE.Vector3();
   function updateLabels(){
     if (!labelsEl) return; labelsEl.hidden = !api.showLabels; if (!api.showLabels) return;
     const w = canvas.clientWidth, h = canvas.clientHeight, top = panelPart.position.y;
-    const big = api.mode.cols>1 || api.mode.levels>1;
+    const big = api.version==='v3' && (api.mode.cols>1 || api.mode.levels>1);
     LABELS.forEach(([k,,p,isPanel],i)=>{ if (big && k!=='panel' && k!=='wiring'){ labelEls[i].hidden=true; return; } tmpV.copy(p); if(isPanel) tmpV.y+=top; tmpV.project(camera); const el=labelEls[i]; const vis = tmpV.z<1 && Math.abs(tmpV.x)<1.02 && Math.abs(tmpV.y)<1.02; el.hidden=!vis; if(vis){ el.style.left=((tmpV.x+1)/2*w)+'px'; el.style.top=((1-tmpV.y)/2*h)+'px'; } });
   }
 
@@ -368,6 +585,10 @@ function mount(opts){
       case 'leds': return `Now: ${Lt.on.leds?'on':(Lt.ledSched?'off: shed to save battery':'off: outside schedule')}`;
       case 'fans': return `Now: ${Lt.on.fans?'on':(Lt.fanSched?'off: shed to save battery':'off: outside schedule')}`;
       case 'tank': return `Now: pump ${Lt.on.pump?'running, water circulating':'stopped'}`;
+      case 'sensors': return `Now: water ${(20.5+3*Math.max(0,Math.sin(Math.PI*((S.T%24)-8)/12))).toFixed(1)} °C · EC 1.8 · pH 6.0 (example readings)`;
+      case 'layers': case 'loop': return 'Now: pump running, water flowing down through all 4 layers';
+      case 'tomato': case 'pepper': return 'Fully grown and fruiting (illustration)';
+      case 'cams': case 'screen': case 'dosing': case 'robot': return 'Future concept: not funded by this raise';
       case 'rack': return `Showing ${api.mode.cols*api.mode.levels} module${api.mode.cols*api.mode.levels>1?'s':''}`;
       default: return `Module load now: ${Math.round(Lt.load)} W`;
     }
@@ -389,13 +610,36 @@ function mount(opts){
     stacknoon:{pos:[5.0,4.4,7.4], tgt:[0,2.0,0], mode:[1,2], time:11},
     farm:{pos:[7.6,5.4,10.4], tgt:[0,1.8,0], mode:[3,2]},
     farmnoon:{pos:[7.6,5.4,10.4], tgt:[0,1.8,0], mode:[3,2], time:12},
-    panelnoon:{pos:[2.8,4.4,3.4], tgt:[0,1.95,0], lift:true, time:12, mode:[1,1]}
+    panelnoon:{pos:[2.8,4.4,3.4], tgt:[0,1.95,0], lift:true, time:12, mode:[1,1]},
+    v2:{pos:[3.3,2.7,5.2], tgt:[0,1.15,0], mode:[1,1], ver:'v2'},
+    v2noon:{pos:[3.3,2.7,5.2], tgt:[0,1.15,0], mode:[1,1], ver:'v2', time:12},
+    v3:{pos:[4.6,3.1,6.2], tgt:[0,1.1,0], mode:[1,1], ver:'v3'},
+    v3noon:{pos:[4.6,3.1,6.2], tgt:[0,1.1,0], mode:[1,1], ver:'v3', time:12},
+    v4:{pos:[-2.9,2.2,4.9], tgt:[-0.4,1.05,0.2], mode:[1,1], ver:'v4'},
+    v4noon:{pos:[-2.9,2.2,4.9], tgt:[-0.4,1.05,0.2], mode:[1,1], ver:'v4', time:12},
+    v5:{pos:[2.6,2.2,5.4], tgt:[-0.1,0.95,0.4], mode:[1,1], ver:'v5'},
+    v5noon:{pos:[2.6,2.2,5.4], tgt:[-0.1,0.95,0.4], mode:[1,1], ver:'v5', time:12}
   };
   api.VIEWS = VIEWS;
+  api.VERSIONS = VERSIONS;
+  api.version = 'v3';
+  function setVersion(v){
+    if (!VERSIONS[v]) return;
+    api.version = v;
+    if (v !== 'v3') setMode(1,1);
+    const solar = v !== 'v2';
+    mod.visible = solar; v2G.visible = !solar;
+    v4G.visible = v === 'v4' || v === 'v5'; v5G.visible = v === 'v5';
+    LABELS = LABELSETS[v]; buildLabels();
+    if (api.selected) select(null);
+    if (opts.onVersion) opts.onVersion(v);
+  }
+  api.setVersion = setVersion;
   let fly = null;
   function flyTo(pos, tgt){ fly = {p0:camera.position.clone(), t0:controls.target.clone(), p1:pos, t1:tgt, k:0}; }
   api.setView = function(name, instant){
     const v = VIEWS[name]; if (!v) return;
+    const ver = v.ver || 'v3'; if (ver !== api.version) setVersion(ver);
     if (v.mode) setMode(v.mode[0], v.mode[1]);
     if (v.time !== undefined) S.T = Math.floor(S.T/24)*24 + v.time;
     const lift = v.lift ? panelPart.position.y : 0;
@@ -425,6 +669,9 @@ function mount(opts){
     anim.stars.material.opacity = Math.max(0, 1-dayK*1.5)*0.9;
     const cloudN = {sunny:2, typical:4, cloudy:8, rainy:9}[S.wx];
     anim.clouds.forEach((c,i)=>{ c.visible = i<cloudN; c.position.x += c.userData.speed*dt; if(c.position.x>34) c.position.x=-34; c.children.forEach(s=>s.material.color.setScalar(S.wx==='rainy'?0.62:(0.55+0.45*dayK))); });
+    anim.v2water.forEach(w=>{ w.u = (w.u + 0.03*dt) % 1; along(w.pl, w.u, w.m.position); });
+    if (v4G.visible){ const tt = performance.now()/1000; anim.scan.forEach(s=>{ s.m.opacity = 0.05 + 0.09*(0.5+0.5*Math.sin(tt*2.2+s.ph)); }); anim.screen.t += dt; if (anim.screen.t > 1){ anim.screen.t = 0; const c=anim.screen.tex.userData.canvas; anim.screen.draw(c.getContext('2d'),c.width,c.height); anim.screen.tex.needsUpdate = true; } }
+    if (v5G.visible){ anim.robot.t += dt; poseRobot(anim.robot.t); }
     if (!Lt) return;
     anim.ledMats.forEach(m=>{ m.emissiveIntensity = Lt.on.leds ? 1.6 : 0; });
     anim.ledLights.forEach(p=>{ p.intensity = Lt.on.leds ? 0.7 : 0; });
@@ -461,5 +708,5 @@ function mount(opts){
   return api;
 }
 
-window.GrowFarm = {mount, createSim, PARTS, battV, solarW, LOADS, SHED, LED_ON, FAN_ON, PSH, NOMINAL_V};
+window.GrowFarm = {mount, createSim, PARTS, VERSIONS, battV, solarW, LOADS, SHED, LED_ON, FAN_ON, PSH, NOMINAL_V};
 })();
