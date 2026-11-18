@@ -2,7 +2,7 @@
 
 Hydroponic vertical farms that run themselves, built one version at a time. Made, installed and maintained in Accra, Ghana.
 
-Live site: https://teepreneur.github.io/growtechnologies/
+Live site: https://growtech.starterstech.com/ (also https://teepreneur.github.io/growtechnologies/, which redirects there)
 
 ## Where we are
 - **v1** (2023) – single layer hydroponics. Built.
@@ -18,7 +18,7 @@ A single page built around a live 3D simulation of the farm (three.js). As visit
 - `farm-engine.js` – 3D scene and day/night energy simulation (planning figures, not measured data)
 - `assets/` – logos, a render of the 3D farm and the v2–v5 roadmap pictures
 
-Served with GitHub Pages from the `main` branch.
+Served with GitHub Pages from the `main` branch. The custom domain is set by the `CNAME` file; DNS for growtech.starterstech.com is at HostGator and points to GitHub Pages.
 
 ## Contact
 (+233) 544198026 · Mon–Sat, 7 AM – 5 PM · Accra, Ghana
