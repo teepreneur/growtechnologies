@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KOPIA Component Register</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{--ink:#1d2421;--muted:#5d6862;--line:#d3d8d1;--accent:#1f7a5a;--bg:#ffffff;--band:#f2f4f0;--warn:#b5651d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 "Barlow",system-ui,sans-serif}
+.page{max-width:1200px;margin:0 auto;padding:24px 16px 48px}
+header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--accent);padding-bottom:12px;margin-bottom:16px}
+h1{font:700 28px/1.1 "Barlow Condensed",sans-serif;margin:0;letter-spacing:.01em}
+.sub{color:var(--muted)}
+.rev{font:500 11px "JetBrains Mono",monospace;color:var(--warn);text-align:right}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 18px}
+.summary div{background:var(--band);padding:8px 10px;border-left:4px solid var(--c)}
+.summary b{display:block;font:700 20px "Barlow Condensed",sans-serif}
+.counts{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 16px;color:var(--muted)}
+.counts b{color:var(--ink)}
+h2{font:700 18px "Barlow Condensed",sans-serif;margin:22px 0 6px;padding:6px 10px;background:var(--band);border-left:6px solid var(--c);break-after:avoid}
+table{width:100%;border-collapse:collapse;break-inside:auto}
+th,td{text-align:left;vertical-align:top;padding:5px 6px;border-bottom:1px solid var(--line)}
+th{font:600 11px "Barlow",sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+tr{break-inside:avoid}
+td.tag{font:500 12px "JetBrains Mono",monospace;white-space:nowrap}
+td.qty{text-align:right;white-space:nowrap}
+.badge{display:inline-block;font:600 10px "Barlow",sans-serif;text-transform:uppercase;padding:1px 6px;border-radius:3px;border:1px solid var(--line)}
+.b-existing{background:#e7eef6}.b-relocate{background:#fff1d6}.b-reuse{background:#e8f3e8}.b-optional{background:#f1e8f6}
+.note{color:var(--warn);font-size:12px}
+.chk{width:16px;height:16px;border:1.5px solid var(--muted);display:inline-block}
+.foot{margin-top:24px;color:var(--muted);font-size:12px}
+.assume li{margin:2px 0}
+@media print{@page{size:A4 landscape;margin:12mm}.page{max-width:none;padding:0}body{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div>
+    <h1>Component register – KOPIA smart greenhouse</h1>
+    <div class="sub">Grow Technologies (GrowTech) · KOPIA Ghana Center, Accra · main greenhouse 24.1 × 11.3 m + nursery house</div>
+  </div>
+  <div class="rev">REV A · 24 NOV 2026<br>FOR REVIEW – NOT PRICED<br>Tags match drawings D-01…D-08 and the 3D model</div>
+</header>
+<div class="counts" id="counts"></div>
+<div class="summary" id="summary"></div>
+<div id="register"></div>
+<h2 style="--c:#b5651d">Assumptions to confirm</h2>
+<ul class="assume" id="assume"></ul>
+<p class="foot">Generated from design-data.js. Quantities for pipes and areas are take-offs from the Rev A layout (±10 %); they are final only after the site measurements. Tick the box when an item has been checked.</p>
+</div>
+<script>
+/* KOPIA Ghana Center – smart greenhouse renovation
+ * SINGLE SOURCE OF TRUTH for the component register, the 2D drawings and the 3D model.
+ * Edit here, and the register, drawings and model all follow.
+ *
+ * Units: metres. Axes: x = along the greenhouse (0 = entrance gable, 24.1 = far gable),
+ * y = across (0 = left wall when standing at the entrance looking in, 11.3 = right wall),
+ * z = up from finished ground level.
+ * The nursery house sits parallel to the main house on the left (negative y), with a 2.0 m gap (ASSUMED).
+ *
+ * No prices here on purpose: this is the "is anything missing?" stage.
+ * status: new | existing | reuse | relocate | optional
+ */
+(function () {
+  const H = {
+    main:    { name: 'Main greenhouse', x0: 0, y0: 0,    L: 24.1, W: 11.3, sideH: 2.8, ridgeH: 5.0 },
+    nursery: { name: 'Nursery house',   x0: 0, y0: -7.3, L: 24.1, W: 5.3,  sideH: 2.4, ridgeH: 3.8 },
+  };
+  const AISLE = { y0: 5.05, y1: 6.25 };           // main-house central aisle
+  const TRENCH = { y0: 5.35, y1: 5.95, depth: 0.3 }; // concrete pipe trench under the aisle
+
+  // arch height of a house at a given y (semi-elliptical roof over vertical side walls)
+  function archZ(h, y) {
+    const half = h.W / 2, c = h.y0 + half;
+    const u = Math.min(1, Math.abs(y - c) / half);
+    return h.sideH + (h.ridgeH - h.sideH) * Math.sqrt(1 - u * u);
+  }
+
+  const box = (x0, y0, z0, x1, y1, z1) => ({ t: 'box', x0, y0, z0, x1, y1, z1 });
+  const cyl = (x, y, z0, r, h) => ({ t: 'cyl', x, y, z0, r, h });
+  const pipe = (d, ...pts) => ({ t: 'pipe', d, pts });
+
+  const items = [];
+  const add = (o) => { items.push(Object.assign({ status: 'new', qty: 1, unit: 'no.', geo: [] }, o)); };
+
+  /* ---------------- ZONES ---------------- */
+  const zones = [
+    { id: 'SVC', house: 'main', name: 'Service & tank corner', x0: 0.2, x1: 3.3, y0: 0.2, y1: 11.1, color: '#8a8f99' },
+    { id: 'TOM', house: 'main', name: 'Tomato – drip Dutch buckets', x0: 3.4, x1: 16.4, y0: 0.4, y1: 4.9, color: '#c8553d' },
+    { id: 'LET', house: 'main', name: 'Lettuce – vertical NFT A-frames', x0: 3.4, x1: 9.7, y0: 6.5, y1: 11.0, color: '#5a9e3a' },
+    { id: 'STB', house: 'main', name: 'Strawberry cool chamber', x0: 10.0, x1: 15.6, y0: 6.6, y1: 10.9, color: '#d1495b' },
+    { id: 'DEM', house: 'main', name: 'Teaching benches – wick & Kratky', x0: 15.9, x1: 17.1, y0: 6.6, y1: 10.9, color: '#e0a526' },
+    { id: 'AQU', house: 'main', name: 'Aquaponics – tilapia + rafts', x0: 17.3, x1: 23.9, y0: 0.3, y1: 11.1, color: '#2f7fb5' },
+    { id: 'NUR', house: 'nursery', name: 'Nursery – seedlings', x0: 0.3, x1: 23.8, y0: -7.0, y1: -2.3, color: '#7b6cb0' },
+    { id: 'EXT', house: 'site', name: 'Outside – water, power, outdoor units', x0: -4, x1: 28, y0: 11.3, y1: 14, color: '#666' },
+  ];
+
+  /* ---------------- CATEGORIES ---------------- */
+  const categories = [
+    { id: 'STR', name: 'Structures & civil works', color: '#9c8b74' },
+    { id: 'GRW', name: 'Growing systems', color: '#4f9d4a' },
+    { id: 'TNK', name: 'Tanks & reservoirs', color: '#3c6e9f' },
+    { id: 'WTR', name: 'Water treatment (salty water → RO)', color: '#2aa3b3' },
+    { id: 'PMP', name: 'Pumps & aeration', color: '#1f5f8b' },
+    { id: 'PIP', name: 'Pipes, valves & fittings', color: '#d9d9d9' },
+    { id: 'SNS', name: 'Sensors', color: '#e8590c' },
+    { id: 'CTL', name: 'Automation & control', color: '#7048e8' },
+    { id: 'CLM', name: 'Climate control (fans, shade, AC, chiller)', color: '#868e96' },
+    { id: 'ELC', name: 'Electrical & backup power', color: '#f2c12e' },
+    { id: 'LGT', name: 'Lighting', color: '#ffd8a8' },
+    { id: 'STP', name: 'Start-up stock, consumables & spares', color: '#adb5bd' },
+    { id: 'SRV', name: 'Services (design, install, commissioning, training)', color: '#495057' },
+  ];
+
+  /* ======================= STRUCTURES & CIVIL ======================= */
+  add({ tag: 'STR-01', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Clear-out of old tomato troughs, liners and drip strips', spec: 'Remove and dispose of the old ground troughs, plastic liner and dead plants; level the ground', qty: 1, unit: 'lot' });
+  add({ tag: 'STR-02', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Main house roof film replacement', spec: 'UV-stabilised greenhouse PE film 200 µm, anti-drip, about 24.1 m × 12.6 m arch + 2 gables', qty: 340, unit: 'm²', note: 'Area estimated from the assumed 5.0 m ridge – measure on site' });
+  add({ tag: 'STR-03', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Main house insect-net side walls and gables', spec: '50-mesh UV insect net, both sides 24.1 × 2.8 m + gable panels', qty: 160, unit: 'm²' });
+  add({ tag: 'STR-04', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Roll-up side curtains – repair and new crank winders', spec: 'Curtain film both sides, roll bars, 2 crank winders, curtain stops', qty: 2, unit: 'sides' });
+  add({ tag: 'STR-05', cat: 'STR', zone: 'SVC', name: 'Entrance porch rebuild with double insect-proof doors', spec: '2.18 × 1.55 m porch, steel frame, net walls, 2 self-closing doors (airlock)', qty: 1, unit: 'no.', geo: [box(-1.55, 4.56, 0, 0, 6.74, 2.3)] });
+  add({ tag: 'STR-06', cat: 'STR', zone: 'AQU', name: 'Far-end door (at old fan position)', spec: 'Steel-framed net door 1.2 × 2.1 m, centred on the gable', qty: 1, unit: 'no.', geo: [box(24.05, 5.05, 0, 24.15, 6.25, 2.1)] });
+  add({ tag: 'STR-07', where: 'Whole main house (aisle)', cat: 'STR', zone: 'SVC', name: 'Concrete pipe trench with removable covers – main run', spec: 'Under the central aisle, 0.6 m wide × 0.3 m deep, 10–15 cm concrete walls and base, removable precast covers', qty: 23.5, unit: 'm', note: 'Concrete thickness 10 or 15 cm – CONFIRM', geo: [box(0.3, TRENCH.y0, -0.3, 23.8, TRENCH.y1, 0)] });
+  add({ tag: 'STR-08', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Concrete pipe trench – branches to tanks and zones', spec: 'Same build as STR-07; branches to the RO tank, lettuce tanks, chamber and aquaponics rafts/sump', qty: 14, unit: 'm', geo: [
+    box(1.7, 1.9, -0.25, 2.1, 5.35, 0), box(2.3, 5.95, -0.25, 2.7, 8.4, 0), box(15.6, 5.95, -0.25, 16.0, 7.2, 0), box(17.6, 4.4, -0.25, 18.0, 5.35, 0), box(17.6, 5.95, -0.25, 18.0, 7.0, 0)] });
+  add({ tag: 'STR-09', where: 'Whole main house (aisle)', cat: 'STR', zone: 'SVC', name: 'Aisle surface', spec: 'Compacted gravel on weed mat each side of the trench covers (1.2 m walkway in total)', qty: 24, unit: 'm', geo: [box(0, AISLE.y0, -0.02, 24.1, AISLE.y1, 0)] });
+  add({ tag: 'STR-10', where: 'All tank areas', cat: 'STR', zone: 'SVC', name: 'Tank plinths (concrete pads)', spec: '10 cm reinforced pads under the RO tank, tomato tank, lettuce reservoir, strawberry tank, fish tank and nursery tank (the sump is part-buried)', qty: 6, unit: 'no.', geo: [box(0.3, 0.3, -0.02, 1.9, 1.9, 0.08), box(0.5, 2.3, -0.02, 1.7, 3.5, 0.08), box(2.0, 8.3, -0.02, 3.2, 9.4, 0.08), box(20.9, 0.3, -0.02, 22.7, 2.1, 0.08), box(14.55, 6.95, -0.02, 15.45, 7.85, 0.08), box(22.1, -5.5, -0.02, 23.1, -4.5, 0.08)] });
+  add({ tag: 'STR-11', cat: 'STR', zone: 'TOM', name: 'Tomato raised base (15 cm)', spec: 'Concrete-block or paver plinth 15 cm high under each bucket line, with a fall of 1:100 to the drain end', qty: 6, unit: 'lines × 12.9 m' });
+  add({ tag: 'STR-12', cat: 'STR', zone: 'TOM', name: 'Tomato trellis / high-wire system', spec: '2.4 m high wires over each bucket line, anchored to the hoops via cross-members; roller hooks + twine', qty: 6, unit: 'lines', note: 'Check the hoop frame can carry the crop load (about 15 kg/m)' });
+  add({ tag: 'STR-13', cat: 'STR', zone: 'STB', name: 'Strawberry chamber frame and cladding', spec: '5.6 × 4.3 × 2.5 m galvanised/aluminium frame, 6 mm twin-wall polycarbonate walls and roof, sealed joints', qty: 1, unit: 'no.', geo: [box(10.0, 6.6, 0, 15.6, 10.9, 2.5)] });
+  add({ tag: 'STR-14', cat: 'STR', zone: 'STB', name: 'Strawberry chamber door', spec: 'Insulated, self-closing door 0.9 × 2.1 m on the aisle side, with a brush seal', qty: 1, unit: 'no.' });
+  add({ tag: 'STR-15', cat: 'STR', zone: 'STB', name: 'Extra shade net over the chamber', spec: '50 % aluminet/shade net on top of the chamber roof', qty: 26, unit: 'm²' });
+  add({ tag: 'STR-16', where: 'Both gables', cat: 'STR', zone: 'CLM', name: 'Fan mounting frames in the gables', spec: 'Steel frames + flashing for 4 × 1.27 m box fans, insect-net cowls', qty: 4, unit: 'no.' });
+  add({ tag: 'STR-17', cat: 'STR', zone: 'EXT', name: 'Drain line and soakaway for RO brine and tank dumps', spec: 'Soakaway pit or approved discharge point, about 1.5 × 1.5 × 1.5 m, outside the house', qty: 1, unit: 'no.', geo: [box(-3.5, 9.5, -0.3, -2.0, 11.0, 0.05)] });
+  add({ tag: 'STR-18', cat: 'STR', zone: 'NUR', name: 'Nursery: concrete pipe cover along the centre', spec: 'As STR-07, 23.5 m', qty: 23.5, unit: 'm', geo: [box(0.3, -4.95, -0.3, 23.8, -4.35, 0)] });
+  add({ tag: 'STR-19', cat: 'STR', zone: 'NUR', name: 'Nursery: roof film / net repairs', spec: 'Patch or replace damaged film and net', qty: 1, unit: 'lot', note: 'Condition to check – the photos show it in better shape than the main house' });
+  add({ tag: 'STR-20', cat: 'STR', zone: 'EXT', name: 'Outdoor-unit platform and shade (AC + chiller)', spec: 'Concrete pad + small roof outside the right wall, next to the chamber', qty: 1, unit: 'no.', geo: [box(12.0, 11.6, 0, 15.0, 12.6, 0.1)] });
+
+  /* ======================= GROWING SYSTEMS ======================= */
+  // Tomato: 6 lines of Dutch buckets
+  const tomLines = [0.85, 1.35, 2.45, 2.95, 4.05, 4.55];
+  const bucketsPerLine = Math.floor((16.2 - 3.6) / 0.30) + 1; // 43
+  const tomGeo = [];
+  tomLines.forEach((y) => { for (let i = 0; i < bucketsPerLine; i++) { const x = 3.6 + i * 0.30; tomGeo.push(box(x - 0.13, y - 0.15, 0.15, x + 0.13, y + 0.15, 0.40)); } });
+  const tomBase = tomLines.map((y) => box(3.45, y - 0.2, 0, 16.35, y + 0.2, 0.15));
+  add({ tag: 'GRW-01', cat: 'GRW', zone: 'TOM', name: 'Dutch (Bato) buckets – tomato', spec: '11 L Dutch buckets with siphon elbow, 1 plant each, 30 cm spacing (KOPIA spacing)', qty: bucketsPerLine * tomLines.length, unit: 'no.', geo: tomGeo });
+  add({ tag: 'GRW-02', cat: 'GRW', zone: 'TOM', name: 'Raised base geometry (see STR-11)', spec: '—', qty: 0, unit: '—', geo: tomBase, hidden: true });
+  add({ tag: 'GRW-03', cat: 'GRW', zone: 'TOM', name: 'Tomato growing medium', spec: 'Perlite / coco-chip mix (or clay pebbles) for the buckets', qty: Math.ceil(bucketsPerLine * tomLines.length * 11 / 50), unit: 'bags (50 L)' });
+  add({ tag: 'GRW-04', cat: 'GRW', zone: 'TOM', name: 'Tomato drain collector pipe under the buckets', spec: '50 mm PVC, 1:100 fall to the service end, into drain sump TNK-05', qty: 6 * 13, unit: 'm', geo: tomLines.map((y) => pipe(0.05, [16.3, y, 0.12], [3.4, y, 0.10], [2.75, 1.0, 0.05])) });
+
+  // Lettuce NFT A-frames
+  const aFrames = [7.5, 9.9];
+  const nftGeo = []; const nftCh = [];
+  aFrames.forEach((yc) => {
+    nftGeo.push(box(3.8, yc - 0.65, 0, 9.4, yc - 0.6, 1.85), box(3.8, yc + 0.6, 0, 9.4, yc + 0.65, 1.85));
+    [0.35, 0.7, 1.05, 1.4, 1.75].forEach((z, k) => {
+      const off = 0.6 - k * 0.11;
+      nftCh.push(box(3.8, yc - off - 0.1, z, 9.4, yc - off, z + 0.05), box(3.8, yc + off, z, 9.4, yc + off + 0.1, z + 0.05));
+    });
+  });
+  const holesPerCh = Math.floor(5.6 / 0.2);
+  add({ tag: 'GRW-05', cat: 'GRW', zone: 'LET', name: 'NFT A-frame racks (galvanised / aluminium)', spec: '5.6 m long × 1.3 m wide × 1.85 m high, 5 channel levels per side', qty: aFrames.length, unit: 'no.', geo: nftGeo });
+  add({ tag: 'GRW-06', cat: 'GRW', zone: 'LET', name: 'NFT channels 100 × 50 mm food-grade', spec: `5.6 m long, holes at 20 cm → ${holesPerCh} plants per channel, 1:40 slope, end caps`, qty: nftCh.length, unit: 'channels', note: `${nftCh.length * holesPerCh} lettuce plants in total`, geo: nftCh });
+  add({ tag: 'GRW-07', cat: 'GRW', zone: 'LET', name: 'Net cups 50 mm + rockwool/oasis plugs', spec: 'For NFT and rafts (+10 % spare)', qty: Math.ceil((nftCh.length * holesPerCh + 432) * 1.1), unit: 'no.' });
+
+  // Strawberry gutters (inside the chamber)
+  const stbG = [7.4, 8.65, 9.9];
+  const stbGeo = [];
+  stbG.forEach((y) => { stbGeo.push(box(10.4, y - 0.17, 0.95, 14.4, y + 0.17, 1.15)); stbGeo.push(box(10.5, y - 0.05, 0, 10.6, y + 0.05, 0.95), box(12.35, y - 0.05, 0, 12.45, y + 0.05, 0.95), box(14.2, y - 0.05, 0, 14.3, y + 0.05, 0.95)); });
+  add({ tag: 'GRW-08', cat: 'GRW', zone: 'STB', name: 'Elevated strawberry gutters on stands ("Korean high-bed")', spec: '4.0 m × 0.34 m substrate gutters at 1.0–1.15 m, 2 rows of plants at 20 cm → 40 plants per gutter', qty: stbG.length, unit: 'gutters', note: `${stbG.length * 40} strawberry plants`, geo: stbGeo });
+  add({ tag: 'GRW-09', cat: 'GRW', zone: 'STB', name: 'Strawberry substrate', spec: 'Cocopeat : perlite 70 : 30, washed and buffered', qty: 6, unit: 'bags (50 L)' });
+
+  // Teaching benches
+  add({ tag: 'GRW-10', cat: 'GRW', zone: 'DEM', name: 'Wick-system teaching bench', spec: '1.2 × 0.8 m bench with 8 wick containers (lettuce/herbs), clear reservoirs so students can see the roots', qty: 1, unit: 'no.', geo: [box(16.05, 7.2, 0, 17.05, 8.4, 0.8)] });
+  add({ tag: 'GRW-11', cat: 'GRW', zone: 'DEM', name: 'Kratky teaching bench', spec: '1.2 × 0.8 m bench with 6 Kratky tubs (no pump)', qty: 1, unit: 'no.', geo: [box(16.0, 8.8, 0, 17.0, 10.0, 0.8)] });
+
+  // Aquaponics growing beds
+  const rafts = [[6.6, 7.8], [8.25, 9.45], [9.9, 11.1]];
+  add({ tag: 'GRW-12', cat: 'GRW', zone: 'AQU', name: 'DWC raft beds (aquaponics lettuce/basil/kangkong)', spec: '6.0 × 1.2 × 0.3 m deep beds on 0.5 m stands, food-safe EPDM/PE liner', qty: 3, unit: 'beds', note: '21.6 m² ≈ 430 plants', geo: rafts.map(([a, b]) => box(17.5, a, 0.5, 23.5, b, 0.8)) });
+  add({ tag: 'GRW-13', cat: 'GRW', zone: 'AQU', name: 'Floating rafts (food-grade foam / XPS)', spec: '1.2 × 0.6 × 0.04 m boards with 50 mm holes at about 20 plants/m²', qty: 30, unit: 'boards' });
+  add({ tag: 'GRW-14', cat: 'GRW', zone: 'AQU', name: 'Media (gravel) bed with bell siphon', spec: '2.5 × 1.0 × 0.3 m on a 0.6 m stand, expanded clay or 10–20 mm washed gravel (not limestone)', qty: 1, unit: 'no.', geo: [box(18.6, 3.6, 0.6, 21.1, 4.6, 0.9)] });
+  add({ tag: 'GRW-15', cat: 'GRW', zone: 'AQU', name: 'Media for the gravel bed', spec: 'Expanded clay pebbles (LECA) 8–16 mm', qty: 0.75, unit: 'm³' });
+
+  // Nursery
+  const nurB = [[1.0, -6.7], [6.8, -6.7], [12.6, -6.7], [1.0, -3.4], [6.8, -3.4]];
+  add({ tag: 'GRW-16', cat: 'GRW', zone: 'NUR', name: 'Seedling benches 5.0 × 0.8 m', spec: 'Steel benches with mesh tops and an ebb-and-flow tray option on 1 bench', qty: 5, unit: 'benches', status: 'reuse', note: 'Refurbish the existing benches if sound; otherwise new. "5 m × 80 cm × 5" from the sketch', geo: nurB.map(([x, y]) => box(x, y, 0, x + 5.0, y + 0.8, 0.8)) });
+  add({ tag: 'GRW-17', cat: 'GRW', zone: 'NUR', name: 'Plug trays + germination medium', spec: '72/104/128-cell trays, peat-moss/cocopeat (as KOPIA already uses)', qty: 60, unit: 'trays' });
+
+  /* ======================= TANKS ======================= */
+  add({ tag: 'TNK-01', cat: 'TNK', zone: 'SVC', name: 'RO water storage tank', spec: '2,000 L food-grade polytank, opaque, lidded', qty: 1, unit: 'no.', geo: [cyl(1.1, 1.1, 0.08, 0.78, 1.35)] });
+  add({ tag: 'TNK-02', cat: 'TNK', zone: 'SVC', name: 'Tomato mixing / feed tank', spec: '1,000 L opaque polytank, insulated jacket', qty: 1, unit: 'no.', geo: [cyl(1.1, 2.9, 0.08, 0.55, 1.25)] });
+  add({ tag: 'TNK-03', cat: 'TNK', zone: 'SVC', name: 'Tomato stock tanks A and B', spec: '100 L each, with lids and stirrer', qty: 2, unit: 'no.', geo: [cyl(2.6, 2.4, 0.0, 0.25, 0.65), cyl(2.6, 3.0, 0.0, 0.25, 0.65)] });
+  add({ tag: 'TNK-04', cat: 'TNK', zone: 'SVC', name: 'Tomato acid (pH-down) tank', spec: '30 L HDPE, acid-rated, bunded', qty: 1, unit: 'no.', geo: [cyl(2.6, 3.6, 0.0, 0.17, 0.5)] });
+  add({ tag: 'TNK-05', cat: 'TNK', zone: 'SVC', name: 'Tomato drain-return sump', spec: '200 L, part-buried, receives bucket drainage before filtering back to TNK-02', qty: 1, unit: 'no.', geo: [cyl(2.75, 1.0, -0.4, 0.33, 0.7)] });
+  add({ tag: 'TNK-06', cat: 'TNK', zone: 'SVC', name: 'Lettuce NFT reservoir', spec: '500 L opaque polytank, insulated', qty: 1, unit: 'no.', geo: [cyl(2.6, 8.85, 0.08, 0.45, 0.9)] });
+  add({ tag: 'TNK-07', cat: 'TNK', zone: 'SVC', name: 'Lettuce stock tanks A, B + acid', spec: '60 L + 60 L + 25 L', qty: 3, unit: 'no.', geo: [cyl(1.5, 8.3, 0, 0.2, 0.6), cyl(1.5, 8.85, 0, 0.2, 0.6), cyl(1.5, 9.4, 0, 0.15, 0.45)] });
+  add({ tag: 'TNK-08', cat: 'TNK', zone: 'STB', name: 'Strawberry reservoir (chilled)', spec: '300 L polytank in a 50 mm insulated jacket, inside the chamber', qty: 1, unit: 'no.', geo: [cyl(15.0, 7.4, 0.08, 0.38, 0.9)] });
+  add({ tag: 'TNK-09', cat: 'TNK', zone: 'STB', name: 'Strawberry stock tanks A, B + acid', spec: '30 L + 30 L + 20 L', qty: 3, unit: 'no.', geo: [cyl(14.85, 8.4, 0, 0.15, 0.5), cyl(14.85, 8.8, 0, 0.15, 0.5), cyl(14.85, 9.2, 0, 0.12, 0.4)] });
+  add({ tag: 'TNK-10', cat: 'TNK', zone: 'AQU', name: 'Fish tank', spec: '2,000 L round tank, 1.6 m dia × 1.15 m, food-grade, with a centre drain and lid/net', qty: 1, unit: 'no.', geo: [cyl(21.8, 1.2, 0.08, 0.8, 1.15)] });
+  add({ tag: 'TNK-11', cat: 'TNK', zone: 'AQU', name: 'Swirl (radial-flow) solids filter', spec: '200 L conical, sludge valve', qty: 1, unit: 'no.', geo: [cyl(19.9, 0.9, 0.0, 0.3, 0.95)] });
+  add({ tag: 'TNK-12', cat: 'TNK', zone: 'AQU', name: 'Biofilter / mineralisation tank', spec: '300 L with K1 moving-bed media + aeration', qty: 1, unit: 'no.', geo: [cyl(19.9, 2.05, 0.0, 0.35, 1.0)] });
+  add({ tag: 'TNK-13', cat: 'TNK', zone: 'AQU', name: 'Aquaponics sump', spec: '500 L, lowest point of the loop', qty: 1, unit: 'no.', geo: [cyl(17.95, 4.2, -0.3, 0.48, 0.8)] });
+  add({ tag: 'TNK-14', cat: 'TNK', zone: 'NUR', name: 'Nursery feed/misting tank', spec: '500 L opaque polytank (RO water + weak nutrient)', qty: 1, unit: 'no.', geo: [cyl(22.6, -5.0, 0.08, 0.45, 0.9)] });
+  add({ tag: 'TNK-15', cat: 'TNK', zone: 'EXT', name: 'Existing raw-water tank on stand', spec: 'Existing elevated black polytank (salty borehole/mains water)', qty: 1, unit: 'no.', status: 'existing', geo: [box(-3.6, 12.4, 0, -2.4, 13.6, 3.0), cyl(-3.0, 13.0, 3.0, 0.7, 1.6)] });
+  add({ tag: 'TNK-16', cat: 'TNK', zone: 'EXT', name: 'Rainwater harvesting tank + side gutters', spec: '5,000 L tank + PVC gutters along both side walls, first-flush diverter', qty: 1, unit: 'set', status: 'optional', geo: [cyl(26.0, 12.6, 0, 1.0, 2.0)] });
+
+  /* ======================= WATER TREATMENT ======================= */
+  add({ tag: 'WTR-01', cat: 'WTR', zone: 'SVC', name: 'Reverse-osmosis (RO) unit', spec: 'Brackish-water RO, about 2,000 L/day (≈ 500 GPD+), high-pressure pump, membranes, auto-flush, TDS display', qty: 1, unit: 'no.', note: 'Final size depends on the water test (EC, Na, Cl, hardness)', geo: [box(0.4, 10.3, 0, 1.6, 10.95, 1.4)] });
+  add({ tag: 'WTR-02', cat: 'WTR', zone: 'SVC', name: 'Pre-filtration train', spec: '20" big-blue housings: 20 µm sediment → 5 µm sediment → carbon block; antiscalant doser', qty: 1, unit: 'set', geo: [box(1.8, 10.55, 0.3, 2.8, 10.95, 1.0)] });
+  add({ tag: 'WTR-03', cat: 'WTR', zone: 'SVC', name: 'Spare filter cartridges (first year)', spec: '2 changes of each cartridge', qty: 1, unit: 'set' });
+  add({ tag: 'WTR-04', cat: 'WTR', zone: 'SVC', name: 'Water quality laboratory test', spec: 'Raw water: EC/TDS, Na, Cl, Ca, Mg, HCO₃, Fe, B, pH (CSIR-WRI or GSA)', qty: 1, unit: 'test' });
+
+  /* ======================= PUMPS & AERATION ======================= */
+  add({ tag: 'PMP-01', cat: 'PMP', zone: 'EXT', name: 'Raw-water booster pump to the RO', spec: '0.5 hp pressure pump with pressure switch', qty: 1, unit: 'no.', geo: [box(-2.2, 12.6, 0, -1.7, 13.0, 0.4)] });
+  add({ tag: 'PMP-02', cat: 'PMP', zone: 'SVC', name: 'Tomato irrigation pump', spec: 'Multistage centrifugal 0.5–0.75 hp, about 2 m³/h at 25 m head, stainless', qty: 1, unit: 'no.', geo: [box(1.8, 2.7, 0, 2.2, 3.1, 0.35)] });
+  add({ tag: 'PMP-03', cat: 'PMP', zone: 'SVC', name: 'Tomato drain-return pump + disc filter', spec: 'Float-switched submersible in TNK-05, 120 mesh disc filter, UV steriliser optional', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-04', cat: 'PMP', zone: 'SVC', name: 'Lettuce NFT circulation pumps', spec: 'Submersible about 3,000 L/h, 1 per A-frame (with a spare in stock)', qty: 2, unit: 'no.' });
+  add({ tag: 'PMP-05', cat: 'PMP', zone: 'STB', name: 'Strawberry drip pump', spec: 'Small pressure pump about 0.6 m³/h at 15 m', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-06', cat: 'PMP', zone: 'AQU', name: 'Aquaponics main circulation pump', spec: 'Energy-efficient submersible about 4,000–6,000 L/h (turns the fish tank over 2–3 × per hour)', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-07', cat: 'PMP', zone: 'AQU', name: 'Fish-water transfer pump → tomato tank', spec: 'Small submersible, timer/level controlled, 100–200 L/day', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-08', cat: 'PMP', zone: 'AQU', name: 'Air pumps 24 V DC (duty + standby)', spec: 'Linear diaphragm pumps about 80–120 L/min each, run from the 24 V backup bus', qty: 2, unit: 'no.', geo: [box(23.1, 3.4, 0.4, 23.7, 3.9, 0.8)] });
+  add({ tag: 'PMP-09', cat: 'PMP', zone: 'AQU', name: 'Air distribution', spec: 'Manifold, air stones/rings for the fish tank, biofilter and each raft bed, check valves', qty: 1, unit: 'set' });
+  add({ tag: 'PMP-10', cat: 'PMP', zone: 'NUR', name: 'Nursery misting pump', spec: 'High-pressure misting pump with timer', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-11', cat: 'PMP', zone: 'SVC', name: 'RO transfer pump (RO tank → reservoirs)', spec: 'Pressure pump 0.5 hp with pressure tank, feeding the solenoid fill valves', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-12', cat: 'PMP', zone: 'SVC', name: 'Lettuce stock dosing + mixing pump', spec: 'Small recirculating pump to mix TNK-06 after dosing', qty: 1, unit: 'no.' });
+
+  /* ======================= PIPES, VALVES & FITTINGS ======================= */
+  const zT = -0.15;
+  add({ tag: 'PIP-01', cat: 'PIP', zone: 'SVC', name: 'RO water main (in the trench)', spec: '32 mm PVC/HDPE PN10 from TNK-01 along the trench to all reservoirs + nursery', qty: 60, unit: 'm', geo: [pipe(0.032, [1.1, 1.9, zT], [1.9, 1.9, zT], [1.9, 5.5, zT], [15.8, 5.5, zT], [15.8, 6.9, zT]), pipe(0.032, [1.9, 5.5, zT], [2.5, 5.5, zT], [2.5, 8.4, zT]), pipe(0.032, [15.8, 5.5, zT], [17.8, 5.5, zT], [17.8, 4.6, zT])] });
+  add({ tag: 'PIP-02', cat: 'PIP', zone: 'TOM', name: 'Tomato feed header + lateral manifold', spec: '32 mm PVC header to the 6 lines, ball valve + solenoid per double row', qty: 30, unit: 'm', geo: [pipe(0.032, [1.65, 2.9, 0.3], [2.25, 2.9, 0.3], [2.25, 2.9, 0.9], [3.4, 2.9, 0.9], [3.4, 2.9, 0.5]), pipe(0.032, [3.4, 0.85, 0.5], [3.4, 4.55, 0.5])] });
+  add({ tag: 'PIP-03', cat: 'PIP', zone: 'TOM', name: 'Drip lateral pipe 16 mm + 2 L/h pressure-compensating emitters with stakes', spec: '1 emitter per bucket, arrow drippers, anti-drain', qty: 6 * 13, unit: 'm', note: `${bucketsPerLine * 6} emitters + 10 % spare`, geo: tomLines.map((y) => pipe(0.016, [3.4, y, 0.5], [16.3, y, 0.5])) });
+  add({ tag: 'PIP-04', cat: 'PIP', zone: 'LET', name: 'NFT feed manifold + drain collectors', spec: '25 mm feed with a micro-tube to each channel; 50 mm drain collector back to TNK-06', qty: 40, unit: 'm', geo: aFrames.map((yc) => pipe(0.05, [3.75, yc - 0.6, 0.3], [3.75, yc + 0.6, 0.3], [2.6, 8.85, 0.8])) });
+  add({ tag: 'PIP-05', cat: 'PIP', zone: 'STB', name: 'Strawberry drip system', spec: '16 mm laterals, 1 L/h drippers at 20 cm, return gutter drain to TNK-08', qty: 3 * 4.2, unit: 'm' });
+  add({ tag: 'PIP-06', cat: 'PIP', zone: 'STB', name: 'Chiller loop (insulated)', spec: '25 mm insulated pipe TNK-08 ↔ chiller outside the chamber', qty: 8, unit: 'm', geo: [pipe(0.025, [15.0, 7.4, 0.4], [15.8, 6.8, 0.4], [16.0, 6.8, 0.4])] });
+  add({ tag: 'PIP-07', cat: 'PIP', zone: 'AQU', name: 'Aquaponics loop pipework', spec: '50–110 mm PVC: tank → swirl → biofilter → media bed / rafts → sump → pump → tank; unions on every unit', qty: 45, unit: 'm', geo: [
+    pipe(0.11, [21.8, 1.2, 0.3], [19.9, 0.9, 0.6]), pipe(0.11, [19.9, 0.9, 0.7], [19.9, 2.05, 0.8]), pipe(0.075, [19.9, 2.05, 0.9], [19.9, 3.6, 0.95], [19.9, 4.1, 0.95]),
+    pipe(0.075, [19.9, 2.05, 0.9], [19.9, 3.2, 0.9], [17.36, 3.2, 0.9], [17.36, 5.0, 0.9], [17.36, 5.65, -0.15], [17.8, 5.65, -0.15], [17.8, 7.0, -0.15], [17.7, 7.2, 0.85], [17.7, 10.5, 0.85]),
+    pipe(0.075, [23.4, 7.2, 0.6], [23.4, 10.5, 0.6]), pipe(0.075, [23.4, 7.2, 0.6], [23.4, 6.3, 0.3], [17.8, 5.65, -0.15], [17.95, 4.2, 0.3]),
+    pipe(0.05, [17.95, 4.2, 0.5], [21.0, 2.4, 1.3], [21.8, 1.2, 1.3])] });
+  add({ tag: 'PIP-08', cat: 'PIP', zone: 'AQU', name: 'Fish-water transfer line → tomato tank', spec: '25 mm PE in the trench from the sump to TNK-02 (one-way, check valve)', qty: 20, unit: 'm', geo: [pipe(0.025, [17.95, 4.2, 0.1], [17.8, 5.75, -0.2], [1.95, 5.75, -0.2], [1.1, 2.9, 1.2])] });
+  add({ tag: 'PIP-09', cat: 'PIP', zone: 'EXT', name: 'Raw-water feed + RO brine line', spec: '25 mm raw feed from TNK-15 to WTR-02; 20 mm brine line to the soakaway STR-17', qty: 25, unit: 'm', geo: [pipe(0.025, [-3.0, 13.0, 0.2], [-0.5, 12.0, 0.2], [0.5, 11.0, 0.2], [2.3, 10.75, 0.3]), pipe(0.02, [0.6, 10.3, 0.1], [-0.3, 10.2, 0.1], [-2.7, 10.2, 0.0])] });
+  add({ tag: 'PIP-10', cat: 'PIP', zone: 'NUR', name: 'Nursery misting lines + RO supply', spec: 'Misting nozzles over each bench, 32 mm RO branch from the main house (under the gap)', qty: 45, unit: 'm', geo: nurB.map(([x, y]) => pipe(0.016, [x, y + 0.4, 2.0], [x + 5.0, y + 0.4, 2.0])) });
+  add({ tag: 'PIP-11', where: 'All zones', cat: 'PIP', zone: 'SVC', name: 'Valves', spec: 'Ball valves on every tank outlet; non-return valves on all pumps; float valves as back-up on reservoirs', qty: 40, unit: 'no.' });
+  add({ tag: 'PIP-12', where: 'All zones', cat: 'PIP', zone: 'SVC', name: 'Solenoid valves 24 V', spec: 'RO fill × 5 (TNK-02, 06, 08, 13, 14), tomato rows × 3, nursery misting × 1, drain dump × 3', qty: 12, unit: 'no.' });
+  add({ tag: 'PIP-13', where: 'All zones', cat: 'PIP', zone: 'SVC', name: 'Fittings, solvent cement, clamps, supports', spec: 'Elbows, tees, unions, reducers, pipe clips, PTFE, cement, primer', qty: 1, unit: 'lot' });
+  add({ tag: 'PIP-14', where: 'All tanks', cat: 'PIP', zone: 'SVC', name: 'Tank overflow and dump lines to drain', spec: '50 mm from every reservoir to the drain/soakaway (salt flush)', qty: 30, unit: 'm' });
+
+  /* ======================= SENSORS ======================= */
+  const S = (tag, zone, name, spec, qty, geo, note) => add({ tag, cat: 'SNS', zone, name, spec, qty, unit: 'no.', geo: geo || [], note });
+  const dot = (x, y, z) => box(x - 0.06, y - 0.06, z - 0.06, x + 0.06, y + 0.06, z + 0.06);
+  S('SNS-01', 'SVC', 'EC probes (industrial, temperature-compensated)', 'Tomato feed, tomato drain, lettuce, strawberry, nursery, raw water, RO output', 7, [dot(1.1, 2.9, 1.4), dot(2.75, 1.0, 0.4), dot(2.6, 8.85, 1.05), dot(15.0, 7.4, 1.0), dot(22.6, -5.0, 1.0), dot(-1.2, 12.0, 0.6), dot(1.0, 10.6, 1.5)]);
+  S('SNS-02', 'SVC', 'pH probes (industrial, double-junction)', 'Tomato, lettuce, strawberry, aquaponics sump, nursery', 5, [dot(1.25, 2.9, 1.4), dot(2.75, 8.85, 1.05), dot(15.15, 7.4, 1.0), dot(17.95, 4.2, 0.6), dot(22.75, -5.0, 1.0)]);
+  S('SNS-03', 'SVC', 'Water temperature probes DS18B20 (stainless)', 'All 5 reservoirs + fish tank + chiller return', 7);
+  S('SNS-04', 'SVC', 'Ultrasonic level sensors', 'RO tank, tomato, lettuce, strawberry, sump, nursery', 6);
+  S('SNS-05', 'SVC', 'Low-level float switches (pump protection)', 'One per tank with a pump', 8);
+  S('SNS-06', 'AQU', 'Dissolved-oxygen probe (optical)', 'Fish tank', 1, [dot(21.8, 1.2, 1.3)], 'Critical sensor – alarms if O₂ < 5 mg/L');
+  S('SNS-07', 'SVC', 'Flow sensors', 'Tomato feed, lettuce NFT × 2, strawberry drip, aquaponics loop', 5);
+  S('SNS-08', 'TOM', 'Air temperature + humidity sensors (aspirated)', 'Main house × 2, chamber × 1, nursery × 1', 4, [dot(6.5, 5.65, 1.6), dot(19.0, 5.65, 1.6), dot(12.8, 8.7, 1.6), dot(12.0, -4.65, 1.6)]);
+  S('SNS-09', 'TOM', 'CO₂ sensor (NDIR)', 'Main house, crop height', 1, [dot(12.5, 5.65, 1.4)]);
+  S('SNS-10', 'TOM', 'Light sensor (PAR/lux)', 'Above the shade screen – drives the shade motor', 1, [dot(12.0, 5.65, 3.1)]);
+  S('SNS-11', 'EXT', 'Outdoor weather sensor', 'Outdoor temperature, humidity, rain', 1, [dot(-1.0, 12.4, 2.5)], 'Optional but useful for the fan logic');
+  S('SNS-12', 'ELC', 'Power monitors', 'Mains energy meter (Modbus) + 24 V battery shunt (INA226, as in GrowTech v3)', 2);
+  S('SNS-13', 'SVC', 'Leak / flood sensor', 'Floor of the service corner', 1);
+  S('SNS-14', 'TOM', 'Substrate moisture / drain-cup sensor', '1 tomato drain-cup + 1 strawberry gutter (irrigation feedback)', 2);
+
+  /* ======================= AUTOMATION & CONTROL ======================= */
+  add({ tag: 'CTL-01', cat: 'CTL', zone: 'SVC', name: 'Main control panel (IP65)', spec: 'Gateway (ESP32/Raspberry Pi), 24 V DC PSU, relay and contactor bank for fans, pumps, AC, chiller, RO; HMI touchscreen', qty: 1, unit: 'no.', geo: [box(0.05, 7.0, 0.6, 0.35, 8.0, 2.0)] });
+  add({ tag: 'CTL-02', where: 'All zones', cat: 'CTL', zone: 'SVC', name: 'Zone controller nodes (ESP32, IP65 boxes)', spec: 'Tomato, lettuce, strawberry, aquaponics, climate, nursery – with isolated EC/pH interface boards', qty: 6, unit: 'no.', geo: [box(2.0, 3.9, 1.2, 2.3, 4.2, 1.6), box(3.2, 7.0, 1.2, 3.4, 7.3, 1.6), box(15.6, 9.5, 1.4, 15.8, 9.8, 1.8), box(23.6, 4.5, 1.2, 23.9, 4.8, 1.6), box(0.05, 5.0, 2.3, 0.3, 5.3, 2.7), box(23.6, -4.0, 1.2, 23.9, -3.7, 1.6)] });
+  add({ tag: 'CTL-03', where: 'All tank sets', cat: 'CTL', zone: 'SVC', name: 'Peristaltic dosing pumps', spec: 'Tomato A/B/acid/Cal-Mag-K top-up (4), lettuce A/B/acid (3), strawberry A/B/acid (3), aquaponics pH buffer + iron (2), nursery A/B (2)', qty: 14, unit: 'no.' });
+  add({ tag: 'CTL-04', cat: 'CTL', zone: 'SVC', name: 'Dashboard & alarm software', spec: 'GrowTech dashboard: live readings, set-points per zone, data log, phone app, SMS/WhatsApp alarms', qty: 1, unit: 'licence/setup' });
+  add({ tag: 'CTL-05', cat: 'CTL', zone: 'SVC', name: '4G router + Wi-Fi access point', spec: 'Industrial 4G router with SIM, Wi-Fi covering both houses', qty: 1, unit: 'no.' });
+  add({ tag: 'CTL-06', where: 'Whole site', cat: 'CTL', zone: 'SVC', name: 'Control and sensor cabling', spec: 'Screened sensor cable, RS-485 bus, glands, IP68 connectors', qty: 1, unit: 'lot' });
+  add({ tag: 'CTL-07', cat: 'CTL', zone: 'SVC', name: 'Camera (optional, v4 path)', spec: '2 IP cameras for remote crop checks / AI later', qty: 2, unit: 'no.', status: 'optional' });
+
+  /* ======================= CLIMATE ======================= */
+  const fanZ = (y, s) => [archZ(H.main, y) - s - 0.4, archZ(H.main, y) - 0.4];
+  add({ tag: 'CLM-01', where: 'Both gables', cat: 'CLM', zone: 'SVC', name: 'Existing big fans – relocated above the doors', spec: 'Move the 2 existing gable fans up, centred above each door on the same axis', qty: 2, unit: 'no.', status: 'relocate', note: 'Fan size/model to record', geo: [box(-0.1, 5.0, 2.75, 0.1, 6.3, 4.05), box(24.0, 5.0, 2.75, 24.2, 6.3, 4.05)] });
+  add({ tag: 'CLM-02', cat: 'CLM', zone: 'AQU', name: 'New exhaust fans (box fans 1.27 m / 50")', spec: '2 new fans in the far gable with insect-net cowls and auto-shutters', qty: 2, unit: 'no.', note: 'Positions to confirm; with exhaust at both ends, air enters through the netted sides', geo: [box(24.0, 2.3, 1.2, 24.2, 3.6, 2.5), box(24.0, 7.7, 1.2, 24.2, 9.0, 2.5)] });
+  add({ tag: 'CLM-03', where: 'Control panel', cat: 'CLM', zone: 'SVC', name: 'Fan contactors / soft-starters', spec: 'In CTL-01; temperature-staged (1 → 2 → 4 fans)', qty: 4, unit: 'no.' });
+  add({ tag: 'CLM-04', where: 'Whole main house', cat: 'CLM', zone: 'SVC', name: 'Motorised internal shade screen', spec: 'Horizontal 50 % aluminised screen at gutter height over the whole house, tube motor + wires, light/timer controlled', qty: 270, unit: 'm²', geo: [box(0.1, 0.1, 2.83, 24.0, 11.2, 2.85)] });
+  add({ tag: 'CLM-05', cat: 'CLM', zone: 'SVC', name: 'Shade screen motor + drive', spec: '230 V tube motor with limit switches, driven by CTL-01', qty: 1, unit: 'no.' });
+  add({ tag: 'CLM-06', where: 'Whole main house (aisle)', cat: 'CLM', zone: 'TOM', name: 'Horizontal air-flow (HAF) circulation fans', spec: '45 cm hanging fans along the aisle', qty: 4, unit: 'no.', geo: [5, 9, 19.5, 22].map((x) => cyl(x, 5.65, 2.4, 0.25, 0.3)) });
+  add({ tag: 'CLM-07', cat: 'CLM', zone: 'STB', name: 'Strawberry chamber AC – 1.5 HP inverter split', spec: 'Indoor wall unit inside the chamber; outdoor unit outside the right wall on STR-20', qty: 1, unit: 'set', geo: [box(15.4, 8.6, 1.9, 15.6, 9.5, 2.25), box(12.8, 11.7, 0.1, 13.7, 12.1, 0.8)] });
+  add({ tag: 'CLM-08', cat: 'CLM', zone: 'STB', name: 'Water chiller ¼–½ HP for the strawberry root zone', spec: 'Hydroponic/aquarium chiller holding 18–20 °C', qty: 1, unit: 'no.', note: 'Placed outside the chamber so its heat isn\'t dumped inside', geo: [box(15.75, 6.65, 0, 16.25, 7.05, 0.5)] });
+  add({ tag: 'CLM-09', cat: 'CLM', zone: 'STB', name: 'Chamber circulation fan', spec: 'Small fan for even air inside the chamber', qty: 1, unit: 'no.' });
+  add({ tag: 'CLM-10', cat: 'CLM', zone: 'EXT', name: 'Refrigerant line set + condensate drain', spec: 'AC pipe set through the side wall, condensate to the drain', qty: 1, unit: 'set' });
+
+  /* ======================= ELECTRICAL & BACKUP ======================= */
+  add({ tag: 'ELC-01', cat: 'ELC', zone: 'SVC', name: 'Main distribution board', spec: 'IP65 board, RCBOs 30 mA on every circuit, surge protection, isolator; separate circuits for AC, RO, fans, pumps, sockets', qty: 1, unit: 'no.', geo: [box(0.05, 9.2, 0.8, 0.3, 9.9, 1.9)] });
+  add({ tag: 'ELC-02', cat: 'ELC', zone: 'EXT', name: 'Supply cable from the ECG meter', spec: 'Armoured cable, size from the load schedule (about 6–10 mm²), trenched', qty: 40, unit: 'm', note: 'Distance to the meter – CONFIRM' });
+  add({ tag: 'ELC-03', where: 'Whole main house (aisle)', cat: 'ELC', zone: 'SVC', name: 'Overhead cable tray (electrics kept above the water)', spec: 'Galvanised tray along the aisle at 2.6 m, drops to each zone in conduit', qty: 30, unit: 'm', geo: [box(0.2, 5.0, 2.6, 23.8, 5.15, 2.65)] });
+  add({ tag: 'ELC-04', where: 'All zones', cat: 'ELC', zone: 'SVC', name: 'Weatherproof sockets and isolators', spec: 'IP66 sockets per zone at ≥ 1.2 m, local isolators for each pump', qty: 14, unit: 'no.' });
+  add({ tag: 'ELC-05', where: 'Whole site', cat: 'ELC', zone: 'SVC', name: 'Earthing system', spec: 'Earth rods + bonding of the steel frame, tanks and benches', qty: 1, unit: 'lot' });
+  add({ tag: 'ELC-06', cat: 'ELC', zone: 'SVC', name: '24 V backup power – LiFePO4 battery', spec: '25.6 V 100 Ah LiFePO4 with BMS – powers air pumps, controllers, sensors and the router for ≥ 8 h', qty: 1, unit: 'no.', geo: [box(0.05, 8.2, 0.3, 0.5, 8.9, 1.0)] });
+  add({ tag: 'ELC-07', cat: 'ELC', zone: 'SVC', name: 'Mains battery charger / DC UPS 24 V', spec: '24 V 20 A LiFePO4 charger with automatic changeover', qty: 1, unit: 'no.' });
+  add({ tag: 'ELC-08', cat: 'ELC', zone: 'EXT', name: 'Solar top-up (optional)', spec: '1 × 450–550 W panel + 30 A MPPT on the 24 V backup bus (GrowTech v3 design)', qty: 1, unit: 'set', status: 'optional', geo: [box(-3.8, 6.0, 1.2, -1.8, 7.1, 1.25)] });
+  add({ tag: 'ELC-09', cat: 'ELC', zone: 'SVC', name: 'Fuses, DC breakers, cabling for the 24 V bus', spec: 'Main battery fuse within 20 cm of the battery +, DC breakers per load', qty: 1, unit: 'lot' });
+  add({ tag: 'ELC-10', cat: 'ELC', zone: 'NUR', name: 'Nursery sub-board + cable', spec: 'Small IP65 sub-board fed from ELC-01', qty: 1, unit: 'no.' });
+
+  /* ======================= LIGHTING ======================= */
+  add({ tag: 'LGT-01', cat: 'LGT', zone: 'NUR', name: 'LED grow bars over the seedling benches', spec: 'Full-spectrum IP65 bars, about 2 per bench (5 m), timer for day length', qty: 10, unit: 'bars', geo: nurB.map(([x, y]) => box(x + 0.1, y + 0.3, 1.6, x + 4.9, y + 0.5, 1.65)) });
+  add({ tag: 'LGT-02', cat: 'LGT', zone: 'STB', name: 'LED grow lights in the chamber (day-length / cloudy days)', spec: 'IP65 bars above the 3 gutters', qty: 3, unit: 'bars', status: 'optional', note: 'The sketch mentions "LED light (day length)" – CONFIRM which zone', geo: stbG.map((y) => box(10.5, y - 0.1, 2.2, 14.3, y + 0.1, 2.25)) });
+  add({ tag: 'LGT-03', where: 'Both houses', cat: 'LGT', zone: 'SVC', name: 'Work lighting', spec: 'IP65 LED battens along the aisle in both houses', qty: 10, unit: 'no.' });
+
+  /* ======================= START-UP STOCK & SPARES ======================= */
+  add({ tag: 'STP-01', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'Hydroponic nutrients (A/B per crop + Cal-Mag + K)', spec: '3 months starting stock', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-02', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'pH up/down + calibration fluids', spec: 'pH 4/7 buffers, EC 1.413 standard, storage solution', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-03', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'Spare EC + pH probes', spec: '1 spare each (probes wear out in 12–18 months)', qty: 2, unit: 'no.' });
+  add({ tag: 'STP-04', cat: 'STP', zone: 'AQU', name: 'Tilapia fingerlings', spec: 'Nile tilapia from a certified hatchery (about 150–200)', qty: 200, unit: 'no.' });
+  add({ tag: 'STP-05', cat: 'STP', zone: 'AQU', name: 'Fish feed (starter + grower)', spec: 'Floating pellets, first cycle', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-06', cat: 'STP', zone: 'AQU', name: 'Water test kits', spec: 'Ammonia, nitrite, nitrate, KH test kits', qty: 1, unit: 'set' });
+  add({ tag: 'STP-07', cat: 'STP', zone: 'NUR', name: 'Seeds / plantlets', spec: 'Tomato F1 (heat-tolerant), lettuce (Batavia/loose-leaf), strawberry day-neutral plantlets, basil', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-08', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'Handheld EC/pH meter + DO meter', spec: 'For manual checks and calibration', qty: 1, unit: 'set' });
+  add({ tag: 'STP-09', where: 'Service corner', cat: 'STP', zone: 'SVC', name: 'PPE and chemical storage', spec: 'Gloves, goggles, bunded acid cabinet', qty: 1, unit: 'lot' });
+
+  /* ======================= SERVICES ======================= */
+  add({ tag: 'SRV-01', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Detailed design, drawings and 3D model', spec: 'This package + final as-built drawings', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-02', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Transport and logistics', spec: 'Materials to site', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-03', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Civil and structural labour', spec: 'Trench, plinths, chamber, porch, film/net replacement', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-04', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Plumbing, electrical and automation installation', spec: 'All systems', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-05', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Commissioning and 2-week tuning', spec: 'Water tests, calibration, set-points, fish cycling (nitrogen cycle 4–6 weeks)', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-06', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Training', spec: 'Operators + students: daily checks, dosing, calibration, fish care, dashboard', qty: 3, unit: 'days' });
+  add({ tag: 'SRV-07', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'O&M manual', spec: 'Operation & maintenance manual with schedules', qty: 1, unit: 'no.' });
+  add({ tag: 'SRV-08', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Maintenance / support plan (optional)', spec: 'Monthly visit + remote monitoring', qty: 12, unit: 'months', status: 'optional' });
+
+  // display location for sensors added through S()
+  const sWhere = { 'SNS-01': 'All tanks', 'SNS-02': 'All tanks', 'SNS-03': 'All tanks', 'SNS-04': 'All tanks', 'SNS-05': 'All tanks', 'SNS-07': 'All zones', 'SNS-08': 'Both houses + chamber', 'SNS-12': 'Electrical' };
+  items.forEach((i) => { if (sWhere[i.tag]) i.where = sWhere[i.tag]; });
+
+  /* ---------------- FLOWS (for the schematic) ---------------- */
+  const flows = [
+    ['TNK-15', 'WTR-02', 'raw (salty) water'], ['WTR-02', 'WTR-01', 'filtered'], ['WTR-01', 'TNK-01', 'RO water'], ['WTR-01', 'STR-17', 'brine'],
+    ['TNK-01', 'TNK-02', 'RO fill'], ['TNK-01', 'TNK-06', 'RO fill'], ['TNK-01', 'TNK-08', 'RO fill'], ['TNK-01', 'TNK-13', 'top-up'], ['TNK-01', 'TNK-14', 'RO fill'],
+    ['TNK-03', 'TNK-02', 'A/B dose'], ['TNK-04', 'TNK-02', 'acid'], ['TNK-02', 'GRW-01', 'drip feed'], ['GRW-01', 'TNK-05', 'drain'], ['TNK-05', 'TNK-02', 'filtered return'],
+    ['TNK-07', 'TNK-06', 'dose'], ['TNK-06', 'GRW-06', 'NFT feed'], ['GRW-06', 'TNK-06', 'return'],
+    ['TNK-09', 'TNK-08', 'dose'], ['TNK-08', 'GRW-08', 'chilled drip'], ['GRW-08', 'TNK-08', 'return'], ['TNK-08', 'CLM-08', 'chill loop'],
+    ['TNK-10', 'TNK-11', 'fish water'], ['TNK-11', 'TNK-12', ''], ['TNK-12', 'GRW-14', ''], ['TNK-12', 'GRW-12', ''], ['GRW-12', 'TNK-13', ''], ['GRW-14', 'TNK-13', ''], ['TNK-13', 'TNK-10', 'pumped return'],
+    ['TNK-13', 'TNK-02', 'fish water → tomato (one way)'], ['TNK-11', 'GRW-17', 'sludge → compost'],
+    ['TNK-14', 'GRW-16', 'misting'],
+  ];
+
+  const assumptions = [
+    'Main house 24.1 × 11.3 m and nursery 24.1 m long: from the site sketch. Nursery width 5.3 m: ASSUMED (the note is overwritten).',
+    'Side-wall height 2.8 m and ridge 5.0 m (main), 2.4 / 3.8 m (nursery): ASSUMED from the photos – measure.',
+    'Nursery is parallel to the main house with a 2.0 m gap: ASSUMED from Google Earth.',
+    'The entrance is at x = 0 (porch end); the far door replaces the old fan position.',
+    'Water is salty: full RO assumed until the lab test.',
+    '"8 cm" and "30 × 5" notes are not yet placed – CONFIRM.',
+    'Concrete is a pipe trench/cover only, not a full floor (Triumph, 22 Nov).',
+  ];
+
+  const root = (typeof window !== "undefined") ? window : globalThis;
+  root.KOPIA = { houses: H, aisle: AISLE, trench: TRENCH, zones, categories, items, flows, assumptions, archZ,
+    counts: { tomato: bucketsPerLine * tomLines.length, lettuceNFT: nftCh.length * holesPerCh, strawberry: stbG.length * 40, rafts: 432 } };
+  if (typeof module !== 'undefined') module.exports = root.KOPIA;
+})();
+
+</script>
+<script>
+const K = window.KOPIA;
+const zoneName = Object.fromEntries(K.zones.map(z => [z.id, z.name]));
+zoneName.CLM = 'Climate'; zoneName.ELC = 'Electrical';
+const items = K.items.filter(i => !i.hidden);
+document.getElementById('counts').innerHTML =
+  `<span><b>${K.counts.tomato}</b> tomato buckets</span><span><b>${K.counts.lettuceNFT}</b> NFT lettuce</span><span><b>${K.counts.rafts}</b> aquaponic raft plants</span><span><b>${K.counts.strawberry}</b> strawberry plants</span><span><b>${items.length}</b> line items</span>`;
+document.getElementById('summary').innerHTML = K.categories.map(c => {
+  const n = items.filter(i => i.cat === c.id).length;
+  return `<div style="--c:${c.color}"><b>${n}</b>${c.name}</div>`;
+}).join('');
+const fmt = q => Number.isInteger(q) ? q : q.toFixed(1);
+document.getElementById('register').innerHTML = K.categories.map(c => {
+  const rows = items.filter(i => i.cat === c.id).map(i => `
+    <tr><td><span class="chk"></span></td><td class="tag">${i.tag}</td><td><b>${i.name}</b><br><span class="sub">${i.spec}</span>${i.note ? `<div class="note">⚑ ${i.note}</div>` : ''}</td>
+    <td class="qty">${fmt(i.qty)} ${i.unit}</td><td>${i.where || zoneName[i.zone] || i.zone}</td>
+    <td>${i.status !== 'new' ? `<span class="badge b-${i.status}">${i.status}</span>` : 'new'}</td></tr>`).join('');
+  return `<h2 style="--c:${c.color}">${c.id} · ${c.name}</h2>
+  <table><thead><tr><th style="width:24px"></th><th style="width:70px">Tag</th><th>Item & specification</th><th style="width:120px;text-align:right">Qty</th><th style="width:170px">Zone</th><th style="width:80px">Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+}).join('');
+document.getElementById('assume').innerHTML = K.assumptions.map(a => `<li>${a}</li>`).join('');
+</script>
+</body>
+</html>

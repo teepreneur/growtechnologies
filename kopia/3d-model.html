@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KOPIA Greenhouse 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Same workshop-bench look as the v2 stall model: 3D on the left, parts sheet on the right (below on phones). */
+:root{
+  --bg:#eef0eb; --panel:#f8f9f6; --ink:#1d2421; --muted:#5d6862; --line:#d3d8d1;
+  --accent:#1f7a5a; --accent-ink:#ffffff; --warn:#b5651d; --warn-bg:#fbeee0; --ok:#2e7d4f;
+  --scene:#e4e8e2; --info:#2f6fae;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --panel:#1b211e; --ink:#e6ebe7; --muted:#9aa69f; --line:#2c3531;
+  --accent:#4cc495; --accent-ink:#0d1a14; --warn:#f0a35c; --warn-bg:#3a2a1a; --ok:#6fd39b; --scene:#1a201d; --info:#7fb2e5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --panel:#1b211e; --ink:#e6ebe7; --muted:#9aa69f; --line:#2c3531;
+  --accent:#4cc495; --accent-ink:#0d1a14; --warn:#f0a35c; --warn-bg:#3a2a1a; --ok:#6fd39b; --scene:#1a201d; --info:#7fb2e5; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
+h1{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.02em;margin:0;text-wrap:balance}
+header .sub{color:var(--muted);font-size:13px}
+.counts{display:flex;gap:6px;flex-wrap:wrap}
+.counts span{font:500 12px var(--f-mono);border:1px solid var(--line);border-radius:4px;padding:2px 7px;font-variant-numeric:tabular-nums}
+.rev{font:600 11px var(--f-mono);color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn);border-radius:3px;padding:2px 7px;letter-spacing:.03em}
+main{flex:1;display:flex;min-height:0}
+#stage{flex:1;position:relative;min-width:0;background:var(--scene)}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+#tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:4px;font-size:12px;white-space:nowrap;z-index:2}
+#err{position:absolute;inset:12px 12px auto 12px;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn);border-radius:4px;padding:6px 10px;font-size:13px;z-index:3}
+aside{width:380px;flex:none;overflow-y:auto;background:var(--panel);border-left:1px solid var(--line);padding-block:14px 24px;padding-left:16px;padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+section h2{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+button,select,input[type=search]{font:500 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:4px;padding:6px 10px}
+button{cursor:pointer}
+button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=search]{width:100%}
+select{width:100%;background:var(--panel)}
+.mono{font-family:var(--f-mono);font-size:12px;font-variant-numeric:tabular-nums}
+#info{border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:grid;gap:4px;min-height:70px}
+#info .name{font-family:var(--f-display);font-size:18px;font-weight:600;line-height:1.15}
+#info .muted{color:var(--muted);font-size:13px}
+#info dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:4px 0 0;font-size:13px}
+#info dt{color:var(--muted)}
+#info dd{margin:0;min-width:0}
+ul.cats{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+ul.cats label{display:flex;align-items:center;gap:8px;padding:3px 2px;cursor:pointer;font-size:13px}
+.sw{width:12px;height:12px;border-radius:2px;border:1px solid var(--line);flex:none}
+ul.cats .n{margin-left:auto;color:var(--muted)}
+.zbtns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.zbtns button{display:flex;align-items:center;gap:6px;text-align:left;font-size:12px;padding:5px 8px}
+details.grp{border-top:1px solid var(--line)}
+details.grp summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:7px 2px;font-weight:600;font-size:13px;list-style:none}
+details.grp summary::-webkit-details-marker{display:none}
+details.grp summary .n{margin-left:auto;color:var(--muted);font-weight:400}
+ul.parts{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:2px}
+ul.parts li{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;padding:5px 4px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1.3}
+ul.parts li:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+ul.parts li.sel{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+ul.parts .tag{font:500 11px var(--f-mono);color:var(--muted);padding-top:2px}
+ul.parts .meta{grid-column:2;display:flex;gap:5px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:12px}
+.badge{font:600 10px var(--f-mono);padding:1px 5px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase;border:1px solid currentColor}
+.b-new{color:var(--ok)} .b-existing{color:var(--muted)} .b-relocate{color:var(--info)} .b-reuse{color:var(--info)} .b-optional{color:var(--warn)}
+.b-nomodel{color:var(--muted);border-style:dashed}
+.confirm{grid-column:2;color:var(--warn);font-size:12px}
+.foot{font-size:12px;color:var(--muted);line-height:1.5}
+@media (max-width:760px){
+  body{overflow:auto;height:auto}
+  main{flex-direction:column}
+  #stage{height:60vh;flex:none}
+  html,body{overflow-x:hidden}
+  header{display:grid;gap:6px}
+  h1{font-size:19px;min-width:0}
+  .rev{white-space:normal}
+  aside{width:auto;border-left:0;border-top:1px solid var(--line);overflow:visible;padding-left:max(16px,env(safe-area-inset-left,0px))}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>KOPIA Ghana Center · smart greenhouse · 3D model</h1>
+  <span class="sub">Grow Technologies (GrowTech)</span>
+  <div class="counts" id="counts"></div>
+  <span class="rev">Rev A – for review – dimensions marked ASSUMED need site measurement</span>
+</header>
+<main>
+  <div id="stage">
+    <div class="hint">Drag to turn · pinch or scroll to zoom · right-drag to pan · tap a part</div>
+    <div id="tip" hidden></div>
+    <div id="err" hidden></div>
+  </div>
+  <aside>
+    <section>
+      <h2>Selected part</h2>
+      <div id="info"><span class="muted">Tap a part in the model, or a line in the parts list, to see its tag, specification and status.</span></div>
+    </section>
+    <section>
+      <h2>View</h2>
+      <div style="display:grid;gap:10px">
+        <div class="row">
+          <button id="xrayBtn" aria-pressed="false">X-ray structure</button>
+          <button id="roofBtn" aria-pressed="true">Roof film</button>
+          <button id="labelBtn" aria-pressed="true">Zone labels</button>
+          <button id="resetBtn">Reset view</button>
+        </div>
+        <label class="foot" for="zoneOnly">Show
+          <select id="zoneOnly"><option value="">All zones</option></select></label>
+      </div>
+    </section>
+    <section>
+      <h2>Fly to zone</h2>
+      <div class="zbtns" id="zoneBtns"></div>
+    </section>
+    <section>
+      <h2>Categories</h2>
+      <div class="row" style="margin-bottom:6px"><button id="allOn">All on</button><button id="allOff">All off</button></div>
+      <ul class="cats" id="cats"></ul>
+    </section>
+    <section>
+      <h2>Parts list</h2>
+      <input type="search" id="q" placeholder="Search tag, name or spec…" aria-label="Search parts">
+      <div id="parts" style="margin-top:8px"></div>
+    </section>
+    <section>
+      <h2>Assumptions</h2>
+      <ul class="foot" id="assume" style="padding-left:18px;margin:0"></ul>
+    </section>
+    <p class="foot">Built from <span class="mono">design-data.js</span>, the same file as the component register and the 2D drawings. This checks layout and completeness; it isn't exact CAD. Steel is grey, pipes are shown thicker than real so they're easy to see.</p>
+  </aside>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* KOPIA Ghana Center – smart greenhouse renovation
+ * SINGLE SOURCE OF TRUTH for the component register, the 2D drawings and the 3D model.
+ * Edit here, and the register, drawings and model all follow.
+ *
+ * Units: metres. Axes: x = along the greenhouse (0 = entrance gable, 24.1 = far gable),
+ * y = across (0 = left wall when standing at the entrance looking in, 11.3 = right wall),
+ * z = up from finished ground level.
+ * The nursery house sits parallel to the main house on the left (negative y), with a 2.0 m gap (ASSUMED).
+ *
+ * No prices here on purpose: this is the "is anything missing?" stage.
+ * status: new | existing | reuse | relocate | optional
+ */
+(function () {
+  const H = {
+    main:    { name: 'Main greenhouse', x0: 0, y0: 0,    L: 24.1, W: 11.3, sideH: 2.8, ridgeH: 5.0 },
+    nursery: { name: 'Nursery house',   x0: 0, y0: -7.3, L: 24.1, W: 5.3,  sideH: 2.4, ridgeH: 3.8 },
+  };
+  const AISLE = { y0: 5.05, y1: 6.25 };           // main-house central aisle
+  const TRENCH = { y0: 5.35, y1: 5.95, depth: 0.3 }; // concrete pipe trench under the aisle
+
+  // arch height of a house at a given y (semi-elliptical roof over vertical side walls)
+  function archZ(h, y) {
+    const half = h.W / 2, c = h.y0 + half;
+    const u = Math.min(1, Math.abs(y - c) / half);
+    return h.sideH + (h.ridgeH - h.sideH) * Math.sqrt(1 - u * u);
+  }
+
+  const box = (x0, y0, z0, x1, y1, z1) => ({ t: 'box', x0, y0, z0, x1, y1, z1 });
+  const cyl = (x, y, z0, r, h) => ({ t: 'cyl', x, y, z0, r, h });
+  const pipe = (d, ...pts) => ({ t: 'pipe', d, pts });
+
+  const items = [];
+  const add = (o) => { items.push(Object.assign({ status: 'new', qty: 1, unit: 'no.', geo: [] }, o)); };
+
+  /* ---------------- ZONES ---------------- */
+  const zones = [
+    { id: 'SVC', house: 'main', name: 'Service & tank corner', x0: 0.2, x1: 3.3, y0: 0.2, y1: 11.1, color: '#8a8f99' },
+    { id: 'TOM', house: 'main', name: 'Tomato – drip Dutch buckets', x0: 3.4, x1: 16.4, y0: 0.4, y1: 4.9, color: '#c8553d' },
+    { id: 'LET', house: 'main', name: 'Lettuce – vertical NFT A-frames', x0: 3.4, x1: 9.7, y0: 6.5, y1: 11.0, color: '#5a9e3a' },
+    { id: 'STB', house: 'main', name: 'Strawberry cool chamber', x0: 10.0, x1: 15.6, y0: 6.6, y1: 10.9, color: '#d1495b' },
+    { id: 'DEM', house: 'main', name: 'Teaching benches – wick & Kratky', x0: 15.9, x1: 17.1, y0: 6.6, y1: 10.9, color: '#e0a526' },
+    { id: 'AQU', house: 'main', name: 'Aquaponics – tilapia + rafts', x0: 17.3, x1: 23.9, y0: 0.3, y1: 11.1, color: '#2f7fb5' },
+    { id: 'NUR', house: 'nursery', name: 'Nursery – seedlings', x0: 0.3, x1: 23.8, y0: -7.0, y1: -2.3, color: '#7b6cb0' },
+    { id: 'EXT', house: 'site', name: 'Outside – water, power, outdoor units', x0: -4, x1: 28, y0: 11.3, y1: 14, color: '#666' },
+  ];
+
+  /* ---------------- CATEGORIES ---------------- */
+  const categories = [
+    { id: 'STR', name: 'Structures & civil works', color: '#9c8b74' },
+    { id: 'GRW', name: 'Growing systems', color: '#4f9d4a' },
+    { id: 'TNK', name: 'Tanks & reservoirs', color: '#3c6e9f' },
+    { id: 'WTR', name: 'Water treatment (salty water → RO)', color: '#2aa3b3' },
+    { id: 'PMP', name: 'Pumps & aeration', color: '#1f5f8b' },
+    { id: 'PIP', name: 'Pipes, valves & fittings', color: '#d9d9d9' },
+    { id: 'SNS', name: 'Sensors', color: '#e8590c' },
+    { id: 'CTL', name: 'Automation & control', color: '#7048e8' },
+    { id: 'CLM', name: 'Climate control (fans, shade, AC, chiller)', color: '#868e96' },
+    { id: 'ELC', name: 'Electrical & backup power', color: '#f2c12e' },
+    { id: 'LGT', name: 'Lighting', color: '#ffd8a8' },
+    { id: 'STP', name: 'Start-up stock, consumables & spares', color: '#adb5bd' },
+    { id: 'SRV', name: 'Services (design, install, commissioning, training)', color: '#495057' },
+  ];
+
+  /* ======================= STRUCTURES & CIVIL ======================= */
+  add({ tag: 'STR-01', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Clear-out of old tomato troughs, liners and drip strips', spec: 'Remove and dispose of the old ground troughs, plastic liner and dead plants; level the ground', qty: 1, unit: 'lot' });
+  add({ tag: 'STR-02', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Main house roof film replacement', spec: 'UV-stabilised greenhouse PE film 200 µm, anti-drip, about 24.1 m × 12.6 m arch + 2 gables', qty: 340, unit: 'm²', note: 'Area estimated from the assumed 5.0 m ridge – measure on site' });
+  add({ tag: 'STR-03', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Main house insect-net side walls and gables', spec: '50-mesh UV insect net, both sides 24.1 × 2.8 m + gable panels', qty: 160, unit: 'm²' });
+  add({ tag: 'STR-04', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Roll-up side curtains – repair and new crank winders', spec: 'Curtain film both sides, roll bars, 2 crank winders, curtain stops', qty: 2, unit: 'sides' });
+  add({ tag: 'STR-05', cat: 'STR', zone: 'SVC', name: 'Entrance porch rebuild with double insect-proof doors', spec: '2.18 × 1.55 m porch, steel frame, net walls, 2 self-closing doors (airlock)', qty: 1, unit: 'no.', geo: [box(-1.55, 4.56, 0, 0, 6.74, 2.3)] });
+  add({ tag: 'STR-06', cat: 'STR', zone: 'AQU', name: 'Far-end door (at old fan position)', spec: 'Steel-framed net door 1.2 × 2.1 m, centred on the gable', qty: 1, unit: 'no.', geo: [box(24.05, 5.05, 0, 24.15, 6.25, 2.1)] });
+  add({ tag: 'STR-07', where: 'Whole main house (aisle)', cat: 'STR', zone: 'SVC', name: 'Concrete pipe trench with removable covers – main run', spec: 'Under the central aisle, 0.6 m wide × 0.3 m deep, 10–15 cm concrete walls and base, removable precast covers', qty: 23.5, unit: 'm', note: 'Concrete thickness 10 or 15 cm – CONFIRM', geo: [box(0.3, TRENCH.y0, -0.3, 23.8, TRENCH.y1, 0)] });
+  add({ tag: 'STR-08', where: 'Whole main house', cat: 'STR', zone: 'SVC', name: 'Concrete pipe trench – branches to tanks and zones', spec: 'Same build as STR-07; branches to the RO tank, lettuce tanks, chamber and aquaponics rafts/sump', qty: 14, unit: 'm', geo: [
+    box(1.7, 1.9, -0.25, 2.1, 5.35, 0), box(2.3, 5.95, -0.25, 2.7, 8.4, 0), box(15.6, 5.95, -0.25, 16.0, 7.2, 0), box(17.6, 4.4, -0.25, 18.0, 5.35, 0), box(17.6, 5.95, -0.25, 18.0, 7.0, 0)] });
+  add({ tag: 'STR-09', where: 'Whole main house (aisle)', cat: 'STR', zone: 'SVC', name: 'Aisle surface', spec: 'Compacted gravel on weed mat each side of the trench covers (1.2 m walkway in total)', qty: 24, unit: 'm', geo: [box(0, AISLE.y0, -0.02, 24.1, AISLE.y1, 0)] });
+  add({ tag: 'STR-10', where: 'All tank areas', cat: 'STR', zone: 'SVC', name: 'Tank plinths (concrete pads)', spec: '10 cm reinforced pads under the RO tank, tomato tank, lettuce reservoir, strawberry tank, fish tank and nursery tank (the sump is part-buried)', qty: 6, unit: 'no.', geo: [box(0.3, 0.3, -0.02, 1.9, 1.9, 0.08), box(0.5, 2.3, -0.02, 1.7, 3.5, 0.08), box(2.0, 8.3, -0.02, 3.2, 9.4, 0.08), box(20.9, 0.3, -0.02, 22.7, 2.1, 0.08), box(14.55, 6.95, -0.02, 15.45, 7.85, 0.08), box(22.1, -5.5, -0.02, 23.1, -4.5, 0.08)] });
+  add({ tag: 'STR-11', cat: 'STR', zone: 'TOM', name: 'Tomato raised base (15 cm)', spec: 'Concrete-block or paver plinth 15 cm high under each bucket line, with a fall of 1:100 to the drain end', qty: 6, unit: 'lines × 12.9 m' });
+  add({ tag: 'STR-12', cat: 'STR', zone: 'TOM', name: 'Tomato trellis / high-wire system', spec: '2.4 m high wires over each bucket line, anchored to the hoops via cross-members; roller hooks + twine', qty: 6, unit: 'lines', note: 'Check the hoop frame can carry the crop load (about 15 kg/m)' });
+  add({ tag: 'STR-13', cat: 'STR', zone: 'STB', name: 'Strawberry chamber frame and cladding', spec: '5.6 × 4.3 × 2.5 m galvanised/aluminium frame, 6 mm twin-wall polycarbonate walls and roof, sealed joints', qty: 1, unit: 'no.', geo: [box(10.0, 6.6, 0, 15.6, 10.9, 2.5)] });
+  add({ tag: 'STR-14', cat: 'STR', zone: 'STB', name: 'Strawberry chamber door', spec: 'Insulated, self-closing door 0.9 × 2.1 m on the aisle side, with a brush seal', qty: 1, unit: 'no.' });
+  add({ tag: 'STR-15', cat: 'STR', zone: 'STB', name: 'Extra shade net over the chamber', spec: '50 % aluminet/shade net on top of the chamber roof', qty: 26, unit: 'm²' });
+  add({ tag: 'STR-16', where: 'Both gables', cat: 'STR', zone: 'CLM', name: 'Fan mounting frames in the gables', spec: 'Steel frames + flashing for 4 × 1.27 m box fans, insect-net cowls', qty: 4, unit: 'no.' });
+  add({ tag: 'STR-17', cat: 'STR', zone: 'EXT', name: 'Drain line and soakaway for RO brine and tank dumps', spec: 'Soakaway pit or approved discharge point, about 1.5 × 1.5 × 1.5 m, outside the house', qty: 1, unit: 'no.', geo: [box(-3.5, 9.5, -0.3, -2.0, 11.0, 0.05)] });
+  add({ tag: 'STR-18', cat: 'STR', zone: 'NUR', name: 'Nursery: concrete pipe cover along the centre', spec: 'As STR-07, 23.5 m', qty: 23.5, unit: 'm', geo: [box(0.3, -4.95, -0.3, 23.8, -4.35, 0)] });
+  add({ tag: 'STR-19', cat: 'STR', zone: 'NUR', name: 'Nursery: roof film / net repairs', spec: 'Patch or replace damaged film and net', qty: 1, unit: 'lot', note: 'Condition to check – the photos show it in better shape than the main house' });
+  add({ tag: 'STR-20', cat: 'STR', zone: 'EXT', name: 'Outdoor-unit platform and shade (AC + chiller)', spec: 'Concrete pad + small roof outside the right wall, next to the chamber', qty: 1, unit: 'no.', geo: [box(12.0, 11.6, 0, 15.0, 12.6, 0.1)] });
+
+  /* ======================= GROWING SYSTEMS ======================= */
+  // Tomato: 6 lines of Dutch buckets
+  const tomLines = [0.85, 1.35, 2.45, 2.95, 4.05, 4.55];
+  const bucketsPerLine = Math.floor((16.2 - 3.6) / 0.30) + 1; // 43
+  const tomGeo = [];
+  tomLines.forEach((y) => { for (let i = 0; i < bucketsPerLine; i++) { const x = 3.6 + i * 0.30; tomGeo.push(box(x - 0.13, y - 0.15, 0.15, x + 0.13, y + 0.15, 0.40)); } });
+  const tomBase = tomLines.map((y) => box(3.45, y - 0.2, 0, 16.35, y + 0.2, 0.15));
+  add({ tag: 'GRW-01', cat: 'GRW', zone: 'TOM', name: 'Dutch (Bato) buckets – tomato', spec: '11 L Dutch buckets with siphon elbow, 1 plant each, 30 cm spacing (KOPIA spacing)', qty: bucketsPerLine * tomLines.length, unit: 'no.', geo: tomGeo });
+  add({ tag: 'GRW-02', cat: 'GRW', zone: 'TOM', name: 'Raised base geometry (see STR-11)', spec: '—', qty: 0, unit: '—', geo: tomBase, hidden: true });
+  add({ tag: 'GRW-03', cat: 'GRW', zone: 'TOM', name: 'Tomato growing medium', spec: 'Perlite / coco-chip mix (or clay pebbles) for the buckets', qty: Math.ceil(bucketsPerLine * tomLines.length * 11 / 50), unit: 'bags (50 L)' });
+  add({ tag: 'GRW-04', cat: 'GRW', zone: 'TOM', name: 'Tomato drain collector pipe under the buckets', spec: '50 mm PVC, 1:100 fall to the service end, into drain sump TNK-05', qty: 6 * 13, unit: 'm', geo: tomLines.map((y) => pipe(0.05, [16.3, y, 0.12], [3.4, y, 0.10], [2.75, 1.0, 0.05])) });
+
+  // Lettuce NFT A-frames
+  const aFrames = [7.5, 9.9];
+  const nftGeo = []; const nftCh = [];
+  aFrames.forEach((yc) => {
+    nftGeo.push(box(3.8, yc - 0.65, 0, 9.4, yc - 0.6, 1.85), box(3.8, yc + 0.6, 0, 9.4, yc + 0.65, 1.85));
+    [0.35, 0.7, 1.05, 1.4, 1.75].forEach((z, k) => {
+      const off = 0.6 - k * 0.11;
+      nftCh.push(box(3.8, yc - off - 0.1, z, 9.4, yc - off, z + 0.05), box(3.8, yc + off, z, 9.4, yc + off + 0.1, z + 0.05));
+    });
+  });
+  const holesPerCh = Math.floor(5.6 / 0.2);
+  add({ tag: 'GRW-05', cat: 'GRW', zone: 'LET', name: 'NFT A-frame racks (galvanised / aluminium)', spec: '5.6 m long × 1.3 m wide × 1.85 m high, 5 channel levels per side', qty: aFrames.length, unit: 'no.', geo: nftGeo });
+  add({ tag: 'GRW-06', cat: 'GRW', zone: 'LET', name: 'NFT channels 100 × 50 mm food-grade', spec: `5.6 m long, holes at 20 cm → ${holesPerCh} plants per channel, 1:40 slope, end caps`, qty: nftCh.length, unit: 'channels', note: `${nftCh.length * holesPerCh} lettuce plants in total`, geo: nftCh });
+  add({ tag: 'GRW-07', cat: 'GRW', zone: 'LET', name: 'Net cups 50 mm + rockwool/oasis plugs', spec: 'For NFT and rafts (+10 % spare)', qty: Math.ceil((nftCh.length * holesPerCh + 432) * 1.1), unit: 'no.' });
+
+  // Strawberry gutters (inside the chamber)
+  const stbG = [7.4, 8.65, 9.9];
+  const stbGeo = [];
+  stbG.forEach((y) => { stbGeo.push(box(10.4, y - 0.17, 0.95, 14.4, y + 0.17, 1.15)); stbGeo.push(box(10.5, y - 0.05, 0, 10.6, y + 0.05, 0.95), box(12.35, y - 0.05, 0, 12.45, y + 0.05, 0.95), box(14.2, y - 0.05, 0, 14.3, y + 0.05, 0.95)); });
+  add({ tag: 'GRW-08', cat: 'GRW', zone: 'STB', name: 'Elevated strawberry gutters on stands ("Korean high-bed")', spec: '4.0 m × 0.34 m substrate gutters at 1.0–1.15 m, 2 rows of plants at 20 cm → 40 plants per gutter', qty: stbG.length, unit: 'gutters', note: `${stbG.length * 40} strawberry plants`, geo: stbGeo });
+  add({ tag: 'GRW-09', cat: 'GRW', zone: 'STB', name: 'Strawberry substrate', spec: 'Cocopeat : perlite 70 : 30, washed and buffered', qty: 6, unit: 'bags (50 L)' });
+
+  // Teaching benches
+  add({ tag: 'GRW-10', cat: 'GRW', zone: 'DEM', name: 'Wick-system teaching bench', spec: '1.2 × 0.8 m bench with 8 wick containers (lettuce/herbs), clear reservoirs so students can see the roots', qty: 1, unit: 'no.', geo: [box(16.05, 7.2, 0, 17.05, 8.4, 0.8)] });
+  add({ tag: 'GRW-11', cat: 'GRW', zone: 'DEM', name: 'Kratky teaching bench', spec: '1.2 × 0.8 m bench with 6 Kratky tubs (no pump)', qty: 1, unit: 'no.', geo: [box(16.0, 8.8, 0, 17.0, 10.0, 0.8)] });
+
+  // Aquaponics growing beds
+  const rafts = [[6.6, 7.8], [8.25, 9.45], [9.9, 11.1]];
+  add({ tag: 'GRW-12', cat: 'GRW', zone: 'AQU', name: 'DWC raft beds (aquaponics lettuce/basil/kangkong)', spec: '6.0 × 1.2 × 0.3 m deep beds on 0.5 m stands, food-safe EPDM/PE liner', qty: 3, unit: 'beds', note: '21.6 m² ≈ 430 plants', geo: rafts.map(([a, b]) => box(17.5, a, 0.5, 23.5, b, 0.8)) });
+  add({ tag: 'GRW-13', cat: 'GRW', zone: 'AQU', name: 'Floating rafts (food-grade foam / XPS)', spec: '1.2 × 0.6 × 0.04 m boards with 50 mm holes at about 20 plants/m²', qty: 30, unit: 'boards' });
+  add({ tag: 'GRW-14', cat: 'GRW', zone: 'AQU', name: 'Media (gravel) bed with bell siphon', spec: '2.5 × 1.0 × 0.3 m on a 0.6 m stand, expanded clay or 10–20 mm washed gravel (not limestone)', qty: 1, unit: 'no.', geo: [box(18.6, 3.6, 0.6, 21.1, 4.6, 0.9)] });
+  add({ tag: 'GRW-15', cat: 'GRW', zone: 'AQU', name: 'Media for the gravel bed', spec: 'Expanded clay pebbles (LECA) 8–16 mm', qty: 0.75, unit: 'm³' });
+
+  // Nursery
+  const nurB = [[1.0, -6.7], [6.8, -6.7], [12.6, -6.7], [1.0, -3.4], [6.8, -3.4]];
+  add({ tag: 'GRW-16', cat: 'GRW', zone: 'NUR', name: 'Seedling benches 5.0 × 0.8 m', spec: 'Steel benches with mesh tops and an ebb-and-flow tray option on 1 bench', qty: 5, unit: 'benches', status: 'reuse', note: 'Refurbish the existing benches if sound; otherwise new. "5 m × 80 cm × 5" from the sketch', geo: nurB.map(([x, y]) => box(x, y, 0, x + 5.0, y + 0.8, 0.8)) });
+  add({ tag: 'GRW-17', cat: 'GRW', zone: 'NUR', name: 'Plug trays + germination medium', spec: '72/104/128-cell trays, peat-moss/cocopeat (as KOPIA already uses)', qty: 60, unit: 'trays' });
+
+  /* ======================= TANKS ======================= */
+  add({ tag: 'TNK-01', cat: 'TNK', zone: 'SVC', name: 'RO water storage tank', spec: '2,000 L food-grade polytank, opaque, lidded', qty: 1, unit: 'no.', geo: [cyl(1.1, 1.1, 0.08, 0.78, 1.35)] });
+  add({ tag: 'TNK-02', cat: 'TNK', zone: 'SVC', name: 'Tomato mixing / feed tank', spec: '1,000 L opaque polytank, insulated jacket', qty: 1, unit: 'no.', geo: [cyl(1.1, 2.9, 0.08, 0.55, 1.25)] });
+  add({ tag: 'TNK-03', cat: 'TNK', zone: 'SVC', name: 'Tomato stock tanks A and B', spec: '100 L each, with lids and stirrer', qty: 2, unit: 'no.', geo: [cyl(2.6, 2.4, 0.0, 0.25, 0.65), cyl(2.6, 3.0, 0.0, 0.25, 0.65)] });
+  add({ tag: 'TNK-04', cat: 'TNK', zone: 'SVC', name: 'Tomato acid (pH-down) tank', spec: '30 L HDPE, acid-rated, bunded', qty: 1, unit: 'no.', geo: [cyl(2.6, 3.6, 0.0, 0.17, 0.5)] });
+  add({ tag: 'TNK-05', cat: 'TNK', zone: 'SVC', name: 'Tomato drain-return sump', spec: '200 L, part-buried, receives bucket drainage before filtering back to TNK-02', qty: 1, unit: 'no.', geo: [cyl(2.75, 1.0, -0.4, 0.33, 0.7)] });
+  add({ tag: 'TNK-06', cat: 'TNK', zone: 'SVC', name: 'Lettuce NFT reservoir', spec: '500 L opaque polytank, insulated', qty: 1, unit: 'no.', geo: [cyl(2.6, 8.85, 0.08, 0.45, 0.9)] });
+  add({ tag: 'TNK-07', cat: 'TNK', zone: 'SVC', name: 'Lettuce stock tanks A, B + acid', spec: '60 L + 60 L + 25 L', qty: 3, unit: 'no.', geo: [cyl(1.5, 8.3, 0, 0.2, 0.6), cyl(1.5, 8.85, 0, 0.2, 0.6), cyl(1.5, 9.4, 0, 0.15, 0.45)] });
+  add({ tag: 'TNK-08', cat: 'TNK', zone: 'STB', name: 'Strawberry reservoir (chilled)', spec: '300 L polytank in a 50 mm insulated jacket, inside the chamber', qty: 1, unit: 'no.', geo: [cyl(15.0, 7.4, 0.08, 0.38, 0.9)] });
+  add({ tag: 'TNK-09', cat: 'TNK', zone: 'STB', name: 'Strawberry stock tanks A, B + acid', spec: '30 L + 30 L + 20 L', qty: 3, unit: 'no.', geo: [cyl(14.85, 8.4, 0, 0.15, 0.5), cyl(14.85, 8.8, 0, 0.15, 0.5), cyl(14.85, 9.2, 0, 0.12, 0.4)] });
+  add({ tag: 'TNK-10', cat: 'TNK', zone: 'AQU', name: 'Fish tank', spec: '2,000 L round tank, 1.6 m dia × 1.15 m, food-grade, with a centre drain and lid/net', qty: 1, unit: 'no.', geo: [cyl(21.8, 1.2, 0.08, 0.8, 1.15)] });
+  add({ tag: 'TNK-11', cat: 'TNK', zone: 'AQU', name: 'Swirl (radial-flow) solids filter', spec: '200 L conical, sludge valve', qty: 1, unit: 'no.', geo: [cyl(19.9, 0.9, 0.0, 0.3, 0.95)] });
+  add({ tag: 'TNK-12', cat: 'TNK', zone: 'AQU', name: 'Biofilter / mineralisation tank', spec: '300 L with K1 moving-bed media + aeration', qty: 1, unit: 'no.', geo: [cyl(19.9, 2.05, 0.0, 0.35, 1.0)] });
+  add({ tag: 'TNK-13', cat: 'TNK', zone: 'AQU', name: 'Aquaponics sump', spec: '500 L, lowest point of the loop', qty: 1, unit: 'no.', geo: [cyl(17.95, 4.2, -0.3, 0.48, 0.8)] });
+  add({ tag: 'TNK-14', cat: 'TNK', zone: 'NUR', name: 'Nursery feed/misting tank', spec: '500 L opaque polytank (RO water + weak nutrient)', qty: 1, unit: 'no.', geo: [cyl(22.6, -5.0, 0.08, 0.45, 0.9)] });
+  add({ tag: 'TNK-15', cat: 'TNK', zone: 'EXT', name: 'Existing raw-water tank on stand', spec: 'Existing elevated black polytank (salty borehole/mains water)', qty: 1, unit: 'no.', status: 'existing', geo: [box(-3.6, 12.4, 0, -2.4, 13.6, 3.0), cyl(-3.0, 13.0, 3.0, 0.7, 1.6)] });
+  add({ tag: 'TNK-16', cat: 'TNK', zone: 'EXT', name: 'Rainwater harvesting tank + side gutters', spec: '5,000 L tank + PVC gutters along both side walls, first-flush diverter', qty: 1, unit: 'set', status: 'optional', geo: [cyl(26.0, 12.6, 0, 1.0, 2.0)] });
+
+  /* ======================= WATER TREATMENT ======================= */
+  add({ tag: 'WTR-01', cat: 'WTR', zone: 'SVC', name: 'Reverse-osmosis (RO) unit', spec: 'Brackish-water RO, about 2,000 L/day (≈ 500 GPD+), high-pressure pump, membranes, auto-flush, TDS display', qty: 1, unit: 'no.', note: 'Final size depends on the water test (EC, Na, Cl, hardness)', geo: [box(0.4, 10.3, 0, 1.6, 10.95, 1.4)] });
+  add({ tag: 'WTR-02', cat: 'WTR', zone: 'SVC', name: 'Pre-filtration train', spec: '20" big-blue housings: 20 µm sediment → 5 µm sediment → carbon block; antiscalant doser', qty: 1, unit: 'set', geo: [box(1.8, 10.55, 0.3, 2.8, 10.95, 1.0)] });
+  add({ tag: 'WTR-03', cat: 'WTR', zone: 'SVC', name: 'Spare filter cartridges (first year)', spec: '2 changes of each cartridge', qty: 1, unit: 'set' });
+  add({ tag: 'WTR-04', cat: 'WTR', zone: 'SVC', name: 'Water quality laboratory test', spec: 'Raw water: EC/TDS, Na, Cl, Ca, Mg, HCO₃, Fe, B, pH (CSIR-WRI or GSA)', qty: 1, unit: 'test' });
+
+  /* ======================= PUMPS & AERATION ======================= */
+  add({ tag: 'PMP-01', cat: 'PMP', zone: 'EXT', name: 'Raw-water booster pump to the RO', spec: '0.5 hp pressure pump with pressure switch', qty: 1, unit: 'no.', geo: [box(-2.2, 12.6, 0, -1.7, 13.0, 0.4)] });
+  add({ tag: 'PMP-02', cat: 'PMP', zone: 'SVC', name: 'Tomato irrigation pump', spec: 'Multistage centrifugal 0.5–0.75 hp, about 2 m³/h at 25 m head, stainless', qty: 1, unit: 'no.', geo: [box(1.8, 2.7, 0, 2.2, 3.1, 0.35)] });
+  add({ tag: 'PMP-03', cat: 'PMP', zone: 'SVC', name: 'Tomato drain-return pump + disc filter', spec: 'Float-switched submersible in TNK-05, 120 mesh disc filter, UV steriliser optional', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-04', cat: 'PMP', zone: 'SVC', name: 'Lettuce NFT circulation pumps', spec: 'Submersible about 3,000 L/h, 1 per A-frame (with a spare in stock)', qty: 2, unit: 'no.' });
+  add({ tag: 'PMP-05', cat: 'PMP', zone: 'STB', name: 'Strawberry drip pump', spec: 'Small pressure pump about 0.6 m³/h at 15 m', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-06', cat: 'PMP', zone: 'AQU', name: 'Aquaponics main circulation pump', spec: 'Energy-efficient submersible about 4,000–6,000 L/h (turns the fish tank over 2–3 × per hour)', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-07', cat: 'PMP', zone: 'AQU', name: 'Fish-water transfer pump → tomato tank', spec: 'Small submersible, timer/level controlled, 100–200 L/day', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-08', cat: 'PMP', zone: 'AQU', name: 'Air pumps 24 V DC (duty + standby)', spec: 'Linear diaphragm pumps about 80–120 L/min each, run from the 24 V backup bus', qty: 2, unit: 'no.', geo: [box(23.1, 3.4, 0.4, 23.7, 3.9, 0.8)] });
+  add({ tag: 'PMP-09', cat: 'PMP', zone: 'AQU', name: 'Air distribution', spec: 'Manifold, air stones/rings for the fish tank, biofilter and each raft bed, check valves', qty: 1, unit: 'set' });
+  add({ tag: 'PMP-10', cat: 'PMP', zone: 'NUR', name: 'Nursery misting pump', spec: 'High-pressure misting pump with timer', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-11', cat: 'PMP', zone: 'SVC', name: 'RO transfer pump (RO tank → reservoirs)', spec: 'Pressure pump 0.5 hp with pressure tank, feeding the solenoid fill valves', qty: 1, unit: 'no.' });
+  add({ tag: 'PMP-12', cat: 'PMP', zone: 'SVC', name: 'Lettuce stock dosing + mixing pump', spec: 'Small recirculating pump to mix TNK-06 after dosing', qty: 1, unit: 'no.' });
+
+  /* ======================= PIPES, VALVES & FITTINGS ======================= */
+  const zT = -0.15;
+  add({ tag: 'PIP-01', cat: 'PIP', zone: 'SVC', name: 'RO water main (in the trench)', spec: '32 mm PVC/HDPE PN10 from TNK-01 along the trench to all reservoirs + nursery', qty: 60, unit: 'm', geo: [pipe(0.032, [1.1, 1.9, zT], [1.9, 1.9, zT], [1.9, 5.5, zT], [15.8, 5.5, zT], [15.8, 6.9, zT]), pipe(0.032, [1.9, 5.5, zT], [2.5, 5.5, zT], [2.5, 8.4, zT]), pipe(0.032, [15.8, 5.5, zT], [17.8, 5.5, zT], [17.8, 4.6, zT])] });
+  add({ tag: 'PIP-02', cat: 'PIP', zone: 'TOM', name: 'Tomato feed header + lateral manifold', spec: '32 mm PVC header to the 6 lines, ball valve + solenoid per double row', qty: 30, unit: 'm', geo: [pipe(0.032, [1.65, 2.9, 0.3], [2.25, 2.9, 0.3], [2.25, 2.9, 0.9], [3.4, 2.9, 0.9], [3.4, 2.9, 0.5]), pipe(0.032, [3.4, 0.85, 0.5], [3.4, 4.55, 0.5])] });
+  add({ tag: 'PIP-03', cat: 'PIP', zone: 'TOM', name: 'Drip lateral pipe 16 mm + 2 L/h pressure-compensating emitters with stakes', spec: '1 emitter per bucket, arrow drippers, anti-drain', qty: 6 * 13, unit: 'm', note: `${bucketsPerLine * 6} emitters + 10 % spare`, geo: tomLines.map((y) => pipe(0.016, [3.4, y, 0.5], [16.3, y, 0.5])) });
+  add({ tag: 'PIP-04', cat: 'PIP', zone: 'LET', name: 'NFT feed manifold + drain collectors', spec: '25 mm feed with a micro-tube to each channel; 50 mm drain collector back to TNK-06', qty: 40, unit: 'm', geo: aFrames.map((yc) => pipe(0.05, [3.75, yc - 0.6, 0.3], [3.75, yc + 0.6, 0.3], [2.6, 8.85, 0.8])) });
+  add({ tag: 'PIP-05', cat: 'PIP', zone: 'STB', name: 'Strawberry drip system', spec: '16 mm laterals, 1 L/h drippers at 20 cm, return gutter drain to TNK-08', qty: 3 * 4.2, unit: 'm' });
+  add({ tag: 'PIP-06', cat: 'PIP', zone: 'STB', name: 'Chiller loop (insulated)', spec: '25 mm insulated pipe TNK-08 ↔ chiller outside the chamber', qty: 8, unit: 'm', geo: [pipe(0.025, [15.0, 7.4, 0.4], [15.8, 6.8, 0.4], [16.0, 6.8, 0.4])] });
+  add({ tag: 'PIP-07', cat: 'PIP', zone: 'AQU', name: 'Aquaponics loop pipework', spec: '50–110 mm PVC: tank → swirl → biofilter → media bed / rafts → sump → pump → tank; unions on every unit', qty: 45, unit: 'm', geo: [
+    pipe(0.11, [21.8, 1.2, 0.3], [19.9, 0.9, 0.6]), pipe(0.11, [19.9, 0.9, 0.7], [19.9, 2.05, 0.8]), pipe(0.075, [19.9, 2.05, 0.9], [19.9, 3.6, 0.95], [19.9, 4.1, 0.95]),
+    pipe(0.075, [19.9, 2.05, 0.9], [19.9, 3.2, 0.9], [17.36, 3.2, 0.9], [17.36, 5.0, 0.9], [17.36, 5.65, -0.15], [17.8, 5.65, -0.15], [17.8, 7.0, -0.15], [17.7, 7.2, 0.85], [17.7, 10.5, 0.85]),
+    pipe(0.075, [23.4, 7.2, 0.6], [23.4, 10.5, 0.6]), pipe(0.075, [23.4, 7.2, 0.6], [23.4, 6.3, 0.3], [17.8, 5.65, -0.15], [17.95, 4.2, 0.3]),
+    pipe(0.05, [17.95, 4.2, 0.5], [21.0, 2.4, 1.3], [21.8, 1.2, 1.3])] });
+  add({ tag: 'PIP-08', cat: 'PIP', zone: 'AQU', name: 'Fish-water transfer line → tomato tank', spec: '25 mm PE in the trench from the sump to TNK-02 (one-way, check valve)', qty: 20, unit: 'm', geo: [pipe(0.025, [17.95, 4.2, 0.1], [17.8, 5.75, -0.2], [1.95, 5.75, -0.2], [1.1, 2.9, 1.2])] });
+  add({ tag: 'PIP-09', cat: 'PIP', zone: 'EXT', name: 'Raw-water feed + RO brine line', spec: '25 mm raw feed from TNK-15 to WTR-02; 20 mm brine line to the soakaway STR-17', qty: 25, unit: 'm', geo: [pipe(0.025, [-3.0, 13.0, 0.2], [-0.5, 12.0, 0.2], [0.5, 11.0, 0.2], [2.3, 10.75, 0.3]), pipe(0.02, [0.6, 10.3, 0.1], [-0.3, 10.2, 0.1], [-2.7, 10.2, 0.0])] });
+  add({ tag: 'PIP-10', cat: 'PIP', zone: 'NUR', name: 'Nursery misting lines + RO supply', spec: 'Misting nozzles over each bench, 32 mm RO branch from the main house (under the gap)', qty: 45, unit: 'm', geo: nurB.map(([x, y]) => pipe(0.016, [x, y + 0.4, 2.0], [x + 5.0, y + 0.4, 2.0])) });
+  add({ tag: 'PIP-11', where: 'All zones', cat: 'PIP', zone: 'SVC', name: 'Valves', spec: 'Ball valves on every tank outlet; non-return valves on all pumps; float valves as back-up on reservoirs', qty: 40, unit: 'no.' });
+  add({ tag: 'PIP-12', where: 'All zones', cat: 'PIP', zone: 'SVC', name: 'Solenoid valves 24 V', spec: 'RO fill × 5 (TNK-02, 06, 08, 13, 14), tomato rows × 3, nursery misting × 1, drain dump × 3', qty: 12, unit: 'no.' });
+  add({ tag: 'PIP-13', where: 'All zones', cat: 'PIP', zone: 'SVC', name: 'Fittings, solvent cement, clamps, supports', spec: 'Elbows, tees, unions, reducers, pipe clips, PTFE, cement, primer', qty: 1, unit: 'lot' });
+  add({ tag: 'PIP-14', where: 'All tanks', cat: 'PIP', zone: 'SVC', name: 'Tank overflow and dump lines to drain', spec: '50 mm from every reservoir to the drain/soakaway (salt flush)', qty: 30, unit: 'm' });
+
+  /* ======================= SENSORS ======================= */
+  const S = (tag, zone, name, spec, qty, geo, note) => add({ tag, cat: 'SNS', zone, name, spec, qty, unit: 'no.', geo: geo || [], note });
+  const dot = (x, y, z) => box(x - 0.06, y - 0.06, z - 0.06, x + 0.06, y + 0.06, z + 0.06);
+  S('SNS-01', 'SVC', 'EC probes (industrial, temperature-compensated)', 'Tomato feed, tomato drain, lettuce, strawberry, nursery, raw water, RO output', 7, [dot(1.1, 2.9, 1.4), dot(2.75, 1.0, 0.4), dot(2.6, 8.85, 1.05), dot(15.0, 7.4, 1.0), dot(22.6, -5.0, 1.0), dot(-1.2, 12.0, 0.6), dot(1.0, 10.6, 1.5)]);
+  S('SNS-02', 'SVC', 'pH probes (industrial, double-junction)', 'Tomato, lettuce, strawberry, aquaponics sump, nursery', 5, [dot(1.25, 2.9, 1.4), dot(2.75, 8.85, 1.05), dot(15.15, 7.4, 1.0), dot(17.95, 4.2, 0.6), dot(22.75, -5.0, 1.0)]);
+  S('SNS-03', 'SVC', 'Water temperature probes DS18B20 (stainless)', 'All 5 reservoirs + fish tank + chiller return', 7);
+  S('SNS-04', 'SVC', 'Ultrasonic level sensors', 'RO tank, tomato, lettuce, strawberry, sump, nursery', 6);
+  S('SNS-05', 'SVC', 'Low-level float switches (pump protection)', 'One per tank with a pump', 8);
+  S('SNS-06', 'AQU', 'Dissolved-oxygen probe (optical)', 'Fish tank', 1, [dot(21.8, 1.2, 1.3)], 'Critical sensor – alarms if O₂ < 5 mg/L');
+  S('SNS-07', 'SVC', 'Flow sensors', 'Tomato feed, lettuce NFT × 2, strawberry drip, aquaponics loop', 5);
+  S('SNS-08', 'TOM', 'Air temperature + humidity sensors (aspirated)', 'Main house × 2, chamber × 1, nursery × 1', 4, [dot(6.5, 5.65, 1.6), dot(19.0, 5.65, 1.6), dot(12.8, 8.7, 1.6), dot(12.0, -4.65, 1.6)]);
+  S('SNS-09', 'TOM', 'CO₂ sensor (NDIR)', 'Main house, crop height', 1, [dot(12.5, 5.65, 1.4)]);
+  S('SNS-10', 'TOM', 'Light sensor (PAR/lux)', 'Above the shade screen – drives the shade motor', 1, [dot(12.0, 5.65, 3.1)]);
+  S('SNS-11', 'EXT', 'Outdoor weather sensor', 'Outdoor temperature, humidity, rain', 1, [dot(-1.0, 12.4, 2.5)], 'Optional but useful for the fan logic');
+  S('SNS-12', 'ELC', 'Power monitors', 'Mains energy meter (Modbus) + 24 V battery shunt (INA226, as in GrowTech v3)', 2);
+  S('SNS-13', 'SVC', 'Leak / flood sensor', 'Floor of the service corner', 1);
+  S('SNS-14', 'TOM', 'Substrate moisture / drain-cup sensor', '1 tomato drain-cup + 1 strawberry gutter (irrigation feedback)', 2);
+
+  /* ======================= AUTOMATION & CONTROL ======================= */
+  add({ tag: 'CTL-01', cat: 'CTL', zone: 'SVC', name: 'Main control panel (IP65)', spec: 'Gateway (ESP32/Raspberry Pi), 24 V DC PSU, relay and contactor bank for fans, pumps, AC, chiller, RO; HMI touchscreen', qty: 1, unit: 'no.', geo: [box(0.05, 7.0, 0.6, 0.35, 8.0, 2.0)] });
+  add({ tag: 'CTL-02', where: 'All zones', cat: 'CTL', zone: 'SVC', name: 'Zone controller nodes (ESP32, IP65 boxes)', spec: 'Tomato, lettuce, strawberry, aquaponics, climate, nursery – with isolated EC/pH interface boards', qty: 6, unit: 'no.', geo: [box(2.0, 3.9, 1.2, 2.3, 4.2, 1.6), box(3.2, 7.0, 1.2, 3.4, 7.3, 1.6), box(15.6, 9.5, 1.4, 15.8, 9.8, 1.8), box(23.6, 4.5, 1.2, 23.9, 4.8, 1.6), box(0.05, 5.0, 2.3, 0.3, 5.3, 2.7), box(23.6, -4.0, 1.2, 23.9, -3.7, 1.6)] });
+  add({ tag: 'CTL-03', where: 'All tank sets', cat: 'CTL', zone: 'SVC', name: 'Peristaltic dosing pumps', spec: 'Tomato A/B/acid/Cal-Mag-K top-up (4), lettuce A/B/acid (3), strawberry A/B/acid (3), aquaponics pH buffer + iron (2), nursery A/B (2)', qty: 14, unit: 'no.' });
+  add({ tag: 'CTL-04', cat: 'CTL', zone: 'SVC', name: 'Dashboard & alarm software', spec: 'GrowTech dashboard: live readings, set-points per zone, data log, phone app, SMS/WhatsApp alarms', qty: 1, unit: 'licence/setup' });
+  add({ tag: 'CTL-05', cat: 'CTL', zone: 'SVC', name: '4G router + Wi-Fi access point', spec: 'Industrial 4G router with SIM, Wi-Fi covering both houses', qty: 1, unit: 'no.' });
+  add({ tag: 'CTL-06', where: 'Whole site', cat: 'CTL', zone: 'SVC', name: 'Control and sensor cabling', spec: 'Screened sensor cable, RS-485 bus, glands, IP68 connectors', qty: 1, unit: 'lot' });
+  add({ tag: 'CTL-07', cat: 'CTL', zone: 'SVC', name: 'Camera (optional, v4 path)', spec: '2 IP cameras for remote crop checks / AI later', qty: 2, unit: 'no.', status: 'optional' });
+
+  /* ======================= CLIMATE ======================= */
+  const fanZ = (y, s) => [archZ(H.main, y) - s - 0.4, archZ(H.main, y) - 0.4];
+  add({ tag: 'CLM-01', where: 'Both gables', cat: 'CLM', zone: 'SVC', name: 'Existing big fans – relocated above the doors', spec: 'Move the 2 existing gable fans up, centred above each door on the same axis', qty: 2, unit: 'no.', status: 'relocate', note: 'Fan size/model to record', geo: [box(-0.1, 5.0, 2.75, 0.1, 6.3, 4.05), box(24.0, 5.0, 2.75, 24.2, 6.3, 4.05)] });
+  add({ tag: 'CLM-02', cat: 'CLM', zone: 'AQU', name: 'New exhaust fans (box fans 1.27 m / 50")', spec: '2 new fans in the far gable with insect-net cowls and auto-shutters', qty: 2, unit: 'no.', note: 'Positions to confirm; with exhaust at both ends, air enters through the netted sides', geo: [box(24.0, 2.3, 1.2, 24.2, 3.6, 2.5), box(24.0, 7.7, 1.2, 24.2, 9.0, 2.5)] });
+  add({ tag: 'CLM-03', where: 'Control panel', cat: 'CLM', zone: 'SVC', name: 'Fan contactors / soft-starters', spec: 'In CTL-01; temperature-staged (1 → 2 → 4 fans)', qty: 4, unit: 'no.' });
+  add({ tag: 'CLM-04', where: 'Whole main house', cat: 'CLM', zone: 'SVC', name: 'Motorised internal shade screen', spec: 'Horizontal 50 % aluminised screen at gutter height over the whole house, tube motor + wires, light/timer controlled', qty: 270, unit: 'm²', geo: [box(0.1, 0.1, 2.83, 24.0, 11.2, 2.85)] });
+  add({ tag: 'CLM-05', cat: 'CLM', zone: 'SVC', name: 'Shade screen motor + drive', spec: '230 V tube motor with limit switches, driven by CTL-01', qty: 1, unit: 'no.' });
+  add({ tag: 'CLM-06', where: 'Whole main house (aisle)', cat: 'CLM', zone: 'TOM', name: 'Horizontal air-flow (HAF) circulation fans', spec: '45 cm hanging fans along the aisle', qty: 4, unit: 'no.', geo: [5, 9, 19.5, 22].map((x) => cyl(x, 5.65, 2.4, 0.25, 0.3)) });
+  add({ tag: 'CLM-07', cat: 'CLM', zone: 'STB', name: 'Strawberry chamber AC – 1.5 HP inverter split', spec: 'Indoor wall unit inside the chamber; outdoor unit outside the right wall on STR-20', qty: 1, unit: 'set', geo: [box(15.4, 8.6, 1.9, 15.6, 9.5, 2.25), box(12.8, 11.7, 0.1, 13.7, 12.1, 0.8)] });
+  add({ tag: 'CLM-08', cat: 'CLM', zone: 'STB', name: 'Water chiller ¼–½ HP for the strawberry root zone', spec: 'Hydroponic/aquarium chiller holding 18–20 °C', qty: 1, unit: 'no.', note: 'Placed outside the chamber so its heat isn\'t dumped inside', geo: [box(15.75, 6.65, 0, 16.25, 7.05, 0.5)] });
+  add({ tag: 'CLM-09', cat: 'CLM', zone: 'STB', name: 'Chamber circulation fan', spec: 'Small fan for even air inside the chamber', qty: 1, unit: 'no.' });
+  add({ tag: 'CLM-10', cat: 'CLM', zone: 'EXT', name: 'Refrigerant line set + condensate drain', spec: 'AC pipe set through the side wall, condensate to the drain', qty: 1, unit: 'set' });
+
+  /* ======================= ELECTRICAL & BACKUP ======================= */
+  add({ tag: 'ELC-01', cat: 'ELC', zone: 'SVC', name: 'Main distribution board', spec: 'IP65 board, RCBOs 30 mA on every circuit, surge protection, isolator; separate circuits for AC, RO, fans, pumps, sockets', qty: 1, unit: 'no.', geo: [box(0.05, 9.2, 0.8, 0.3, 9.9, 1.9)] });
+  add({ tag: 'ELC-02', cat: 'ELC', zone: 'EXT', name: 'Supply cable from the ECG meter', spec: 'Armoured cable, size from the load schedule (about 6–10 mm²), trenched', qty: 40, unit: 'm', note: 'Distance to the meter – CONFIRM' });
+  add({ tag: 'ELC-03', where: 'Whole main house (aisle)', cat: 'ELC', zone: 'SVC', name: 'Overhead cable tray (electrics kept above the water)', spec: 'Galvanised tray along the aisle at 2.6 m, drops to each zone in conduit', qty: 30, unit: 'm', geo: [box(0.2, 5.0, 2.6, 23.8, 5.15, 2.65)] });
+  add({ tag: 'ELC-04', where: 'All zones', cat: 'ELC', zone: 'SVC', name: 'Weatherproof sockets and isolators', spec: 'IP66 sockets per zone at ≥ 1.2 m, local isolators for each pump', qty: 14, unit: 'no.' });
+  add({ tag: 'ELC-05', where: 'Whole site', cat: 'ELC', zone: 'SVC', name: 'Earthing system', spec: 'Earth rods + bonding of the steel frame, tanks and benches', qty: 1, unit: 'lot' });
+  add({ tag: 'ELC-06', cat: 'ELC', zone: 'SVC', name: '24 V backup power – LiFePO4 battery', spec: '25.6 V 100 Ah LiFePO4 with BMS – powers air pumps, controllers, sensors and the router for ≥ 8 h', qty: 1, unit: 'no.', geo: [box(0.05, 8.2, 0.3, 0.5, 8.9, 1.0)] });
+  add({ tag: 'ELC-07', cat: 'ELC', zone: 'SVC', name: 'Mains battery charger / DC UPS 24 V', spec: '24 V 20 A LiFePO4 charger with automatic changeover', qty: 1, unit: 'no.' });
+  add({ tag: 'ELC-08', cat: 'ELC', zone: 'EXT', name: 'Solar top-up (optional)', spec: '1 × 450–550 W panel + 30 A MPPT on the 24 V backup bus (GrowTech v3 design)', qty: 1, unit: 'set', status: 'optional', geo: [box(-3.8, 6.0, 1.2, -1.8, 7.1, 1.25)] });
+  add({ tag: 'ELC-09', cat: 'ELC', zone: 'SVC', name: 'Fuses, DC breakers, cabling for the 24 V bus', spec: 'Main battery fuse within 20 cm of the battery +, DC breakers per load', qty: 1, unit: 'lot' });
+  add({ tag: 'ELC-10', cat: 'ELC', zone: 'NUR', name: 'Nursery sub-board + cable', spec: 'Small IP65 sub-board fed from ELC-01', qty: 1, unit: 'no.' });
+
+  /* ======================= LIGHTING ======================= */
+  add({ tag: 'LGT-01', cat: 'LGT', zone: 'NUR', name: 'LED grow bars over the seedling benches', spec: 'Full-spectrum IP65 bars, about 2 per bench (5 m), timer for day length', qty: 10, unit: 'bars', geo: nurB.map(([x, y]) => box(x + 0.1, y + 0.3, 1.6, x + 4.9, y + 0.5, 1.65)) });
+  add({ tag: 'LGT-02', cat: 'LGT', zone: 'STB', name: 'LED grow lights in the chamber (day-length / cloudy days)', spec: 'IP65 bars above the 3 gutters', qty: 3, unit: 'bars', status: 'optional', note: 'The sketch mentions "LED light (day length)" – CONFIRM which zone', geo: stbG.map((y) => box(10.5, y - 0.1, 2.2, 14.3, y + 0.1, 2.25)) });
+  add({ tag: 'LGT-03', where: 'Both houses', cat: 'LGT', zone: 'SVC', name: 'Work lighting', spec: 'IP65 LED battens along the aisle in both houses', qty: 10, unit: 'no.' });
+
+  /* ======================= START-UP STOCK & SPARES ======================= */
+  add({ tag: 'STP-01', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'Hydroponic nutrients (A/B per crop + Cal-Mag + K)', spec: '3 months starting stock', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-02', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'pH up/down + calibration fluids', spec: 'pH 4/7 buffers, EC 1.413 standard, storage solution', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-03', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'Spare EC + pH probes', spec: '1 spare each (probes wear out in 12–18 months)', qty: 2, unit: 'no.' });
+  add({ tag: 'STP-04', cat: 'STP', zone: 'AQU', name: 'Tilapia fingerlings', spec: 'Nile tilapia from a certified hatchery (about 150–200)', qty: 200, unit: 'no.' });
+  add({ tag: 'STP-05', cat: 'STP', zone: 'AQU', name: 'Fish feed (starter + grower)', spec: 'Floating pellets, first cycle', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-06', cat: 'STP', zone: 'AQU', name: 'Water test kits', spec: 'Ammonia, nitrite, nitrate, KH test kits', qty: 1, unit: 'set' });
+  add({ tag: 'STP-07', cat: 'STP', zone: 'NUR', name: 'Seeds / plantlets', spec: 'Tomato F1 (heat-tolerant), lettuce (Batavia/loose-leaf), strawberry day-neutral plantlets, basil', qty: 1, unit: 'lot' });
+  add({ tag: 'STP-08', where: 'All zones', cat: 'STP', zone: 'SVC', name: 'Handheld EC/pH meter + DO meter', spec: 'For manual checks and calibration', qty: 1, unit: 'set' });
+  add({ tag: 'STP-09', where: 'Service corner', cat: 'STP', zone: 'SVC', name: 'PPE and chemical storage', spec: 'Gloves, goggles, bunded acid cabinet', qty: 1, unit: 'lot' });
+
+  /* ======================= SERVICES ======================= */
+  add({ tag: 'SRV-01', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Detailed design, drawings and 3D model', spec: 'This package + final as-built drawings', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-02', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Transport and logistics', spec: 'Materials to site', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-03', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Civil and structural labour', spec: 'Trench, plinths, chamber, porch, film/net replacement', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-04', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Plumbing, electrical and automation installation', spec: 'All systems', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-05', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Commissioning and 2-week tuning', spec: 'Water tests, calibration, set-points, fish cycling (nitrogen cycle 4–6 weeks)', qty: 1, unit: 'lot' });
+  add({ tag: 'SRV-06', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Training', spec: 'Operators + students: daily checks, dosing, calibration, fish care, dashboard', qty: 3, unit: 'days' });
+  add({ tag: 'SRV-07', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'O&M manual', spec: 'Operation & maintenance manual with schedules', qty: 1, unit: 'no.' });
+  add({ tag: 'SRV-08', where: 'Whole project', cat: 'SRV', zone: 'SVC', name: 'Maintenance / support plan (optional)', spec: 'Monthly visit + remote monitoring', qty: 12, unit: 'months', status: 'optional' });
+
+  // display location for sensors added through S()
+  const sWhere = { 'SNS-01': 'All tanks', 'SNS-02': 'All tanks', 'SNS-03': 'All tanks', 'SNS-04': 'All tanks', 'SNS-05': 'All tanks', 'SNS-07': 'All zones', 'SNS-08': 'Both houses + chamber', 'SNS-12': 'Electrical' };
+  items.forEach((i) => { if (sWhere[i.tag]) i.where = sWhere[i.tag]; });
+
+  /* ---------------- FLOWS (for the schematic) ---------------- */
+  const flows = [
+    ['TNK-15', 'WTR-02', 'raw (salty) water'], ['WTR-02', 'WTR-01', 'filtered'], ['WTR-01', 'TNK-01', 'RO water'], ['WTR-01', 'STR-17', 'brine'],
+    ['TNK-01', 'TNK-02', 'RO fill'], ['TNK-01', 'TNK-06', 'RO fill'], ['TNK-01', 'TNK-08', 'RO fill'], ['TNK-01', 'TNK-13', 'top-up'], ['TNK-01', 'TNK-14', 'RO fill'],
+    ['TNK-03', 'TNK-02', 'A/B dose'], ['TNK-04', 'TNK-02', 'acid'], ['TNK-02', 'GRW-01', 'drip feed'], ['GRW-01', 'TNK-05', 'drain'], ['TNK-05', 'TNK-02', 'filtered return'],
+    ['TNK-07', 'TNK-06', 'dose'], ['TNK-06', 'GRW-06', 'NFT feed'], ['GRW-06', 'TNK-06', 'return'],
+    ['TNK-09', 'TNK-08', 'dose'], ['TNK-08', 'GRW-08', 'chilled drip'], ['GRW-08', 'TNK-08', 'return'], ['TNK-08', 'CLM-08', 'chill loop'],
+    ['TNK-10', 'TNK-11', 'fish water'], ['TNK-11', 'TNK-12', ''], ['TNK-12', 'GRW-14', ''], ['TNK-12', 'GRW-12', ''], ['GRW-12', 'TNK-13', ''], ['GRW-14', 'TNK-13', ''], ['TNK-13', 'TNK-10', 'pumped return'],
+    ['TNK-13', 'TNK-02', 'fish water → tomato (one way)'], ['TNK-11', 'GRW-17', 'sludge → compost'],
+    ['TNK-14', 'GRW-16', 'misting'],
+  ];
+
+  const assumptions = [
+    'Main house 24.1 × 11.3 m and nursery 24.1 m long: from the site sketch. Nursery width 5.3 m: ASSUMED (the note is overwritten).',
+    'Side-wall height 2.8 m and ridge 5.0 m (main), 2.4 / 3.8 m (nursery): ASSUMED from the photos – measure.',
+    'Nursery is parallel to the main house with a 2.0 m gap: ASSUMED from Google Earth.',
+    'The entrance is at x = 0 (porch end); the far door replaces the old fan position.',
+    'Water is salty: full RO assumed until the lab test.',
+    '"8 cm" and "30 × 5" notes are not yet placed – CONFIRM.',
+    'Concrete is a pipe trench/cover only, not a full floor (Triumph, 22 Nov).',
+  ];
+
+  const root = (typeof window !== "undefined") ? window : globalThis;
+  root.KOPIA = { houses: H, aisle: AISLE, trench: TRENCH, zones, categories, items, flows, assumptions, archZ,
+    counts: { tomato: bucketsPerLine * tomLines.length, lettuceNFT: nftCh.length * holesPerCh, strawberry: stbG.length * 40, rafts: 432 } };
+  if (typeof module !== 'undefined') module.exports = root.KOPIA;
+})();
+
+</script>
+<script>
+(function(){
+const errBox=document.getElementById('err');
+function showErr(msg){ errBox.hidden=false; errBox.textContent=msg; }
+window.addEventListener('error',e=>showErr('Error: '+e.message));
+if(!window.THREE){ showErr('3D library could not load (offline?). The parts list still works.'); }
+const K=window.KOPIA;
+if(!K){ showErr('design-data.js not found next to this page.'); return; }
+
+/* ---------- lookup tables ---------- */
+const CAT={}; K.categories.forEach(c=>CAT[c.id]=c);
+const ZONE={}; K.zones.forEach(z=>ZONE[z.id]=z);
+const items=K.items.filter(i=>!i.hidden);
+const counts=K.counts;
+document.getElementById('counts').innerHTML=
+  `<span>${counts.tomato} tomato</span><span>${counts.lettuceNFT} NFT lettuce</span><span>${counts.strawberry} strawberry</span><span>~${counts.rafts} raft plants</span>`;
+document.getElementById('assume').innerHTML=K.assumptions.map(a=>`<li></li>`).join('');
+[...document.querySelectorAll('#assume li')].forEach((li,i)=>li.textContent=K.assumptions[i]);
+
+/* ---------- 3D setup ---------- */
+let renderer;
+const stage=document.getElementById('stage');
+try{ renderer=new THREE.WebGLRenderer({antialias:true}); }catch(e){ showErr('3D could not start in this browser. The parts list still works.'); }
+const R3=!!renderer;
+let scene,camera,controls;
+const catGroup={}, itemMeshes={}, pickables=[];
+const houseMats=[]; let roofMeshes=[], labelSprites=[];
+
+// data (x along, y across, z up) -> three (x, z, -y), centred on the site
+const CX=12.05, CY=2.0;
+const V=(x,y,z)=>new THREE.Vector3(x-CX, z, -(y-CY));
+
+if(R3){
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  stage.appendChild(renderer.domElement);
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(40,1,0.1,400);
+  controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.495;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x8a9089,0.8));
+  const sun=new THREE.DirectionalLight(0xffffff,0.65); sun.position.set(-10,25,12); scene.add(sun);
+  const fill=new THREE.DirectionalLight(0xffffff,0.25); fill.position.set(15,8,-10); scene.add(fill);
+  build();
+}
+
+function catMat(cid){
+  const c=CAT[cid];
+  const m=new THREE.MeshStandardMaterial({color:new THREE.Color(c.color),roughness:0.6,metalness:cid==='STR'?0.2:0.03});
+  return m;
+}
+
+function build(){
+  /* ground */
+  const groundMat=new THREE.MeshStandardMaterial({color:0xcfd5cd,roughness:1});
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(70,50),groundMat);
+  ground.rotation.x=-Math.PI/2; ground.position.y=-0.01; scene.add(ground);
+  scene.userData.groundMat=groundMat;
+  const grid=new THREE.GridHelper(70,70,0x9aa39c,0xb9c0b7); grid.position.y=-0.005; grid.material.transparent=true; grid.material.opacity=0.25; scene.add(grid);
+
+  /* houses */
+  const steel=new THREE.MeshStandardMaterial({color:0x8c9590,metalness:0.4,roughness:0.5});
+  const film=new THREE.MeshStandardMaterial({color:0xf4f7f6,transparent:true,opacity:0.16,side:THREE.DoubleSide,depthWrite:false,roughness:0.3});
+  const netTex=(()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const g=c.getContext('2d');
+    g.strokeStyle='rgba(70,80,75,0.9)'; g.lineWidth=2; for(let i=0;i<=64;i+=16){ g.beginPath(); g.moveTo(i,0); g.lineTo(i,64); g.stroke(); g.beginPath(); g.moveTo(0,i); g.lineTo(64,i); g.stroke(); }
+    const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; return t; })();
+  houseMats.push(steel,film);
+  Object.entries(K.houses).forEach(([key,h])=>{
+    const g=new THREE.Group(); g.userData.house=key; scene.add(g);
+    // profile across the house: side wall up, arch over, side wall down
+    const prof=[]; const N=28;
+    prof.push([h.y0,0]);
+    for(let i=0;i<=N;i++){ const y=h.y0+h.W*i/N; prof.push([y,K.archZ(h,y)]); }
+    prof.push([h.y0+h.W,0]);
+    // hoops every ~2 m
+    const nH=Math.round(h.L/2);
+    for(let k=0;k<=nH;k++){
+      const x=h.x0+h.L*k/nH;
+      const pts=prof.map(([y,z])=>V(x,y,z));
+      const tube=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,false,'centripetal'),80,0.03,6,false);
+      g.add(new THREE.Mesh(tube,steel));
+    }
+    // purlins along the length at sides and ridge
+    [[h.y0,h.sideH],[h.y0+h.W/2,h.ridgeH],[h.y0+h.W,h.sideH],[h.y0+h.W*0.2,K.archZ(h,h.y0+h.W*0.2)],[h.y0+h.W*0.8,K.archZ(h,h.y0+h.W*0.8)]].forEach(([y,z])=>{
+      const a=V(h.x0,y,z),b=V(h.x0+h.L,y,z); const d=b.clone().sub(a);
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,d.length(),6),steel);
+      m.position.copy(a).addScaledVector(d,0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); g.add(m);
+    });
+    // roof film (arch only)
+    const arch=prof.slice(1,-1);
+    const pos=[], idx=[];
+    arch.forEach(([y,z])=>{ const a=V(h.x0,y,z), b=V(h.x0+h.L,y,z); pos.push(a.x,a.y,a.z,b.x,b.y,b.z); });
+    for(let i=0;i<arch.length-1;i++){ const a=i*2; idx.push(a,a+1,a+2, a+1,a+3,a+2); }
+    const rg=new THREE.BufferGeometry(); rg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); rg.setIndex(idx); rg.computeVertexNormals();
+    const roof=new THREE.Mesh(rg,film); g.add(roof); roofMeshes.push(roof);
+    // net side walls
+    [h.y0,h.y0+h.W].forEach(y=>{
+      const tex=netTex.clone(); tex.needsUpdate=true; tex.repeat.set(h.L*2,h.sideH*2);
+      const nm=new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.45,side:THREE.DoubleSide,depthWrite:false});
+      houseMats.push(nm);
+      const w=new THREE.Mesh(new THREE.PlaneGeometry(h.L,h.sideH),nm);
+      const c=V(h.x0+h.L/2,y,h.sideH/2); w.position.copy(c); g.add(w);
+    });
+    // gables
+    [h.x0,h.x0+h.L].forEach(x=>{
+      const s=new THREE.Shape(); prof.forEach(([y,z],i)=>{ const p=V(x,y,z); (i?s.lineTo:s.moveTo).call(s,-p.z,p.y); });
+      const gm=new THREE.Mesh(new THREE.ShapeGeometry(s),film);
+      gm.rotation.y=Math.PI/2; gm.position.x=x-CX; g.add(gm); roofMeshes.push(gm);
+    });
+    // house label
+    const lab=makeLabel(h.name+' · '+h.L+' × '+h.W+' m',null,true);
+    lab.position.copy(V(h.x0+h.L/2,h.y0+h.W/2,h.ridgeH+0.8)); scene.add(lab); labelSprites.push(lab);
+  });
+
+  /* zone floor tints + labels */
+  K.zones.forEach(z=>{
+    if(z.house==='site') return;
+    const w=z.x1-z.x0, d=z.y1-z.y0;
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({color:new THREE.Color(z.color),transparent:true,opacity:0.22,depthWrite:false}));
+    m.rotation.x=-Math.PI/2; m.position.copy(V(z.x0+w/2,z.y0+d/2,0.012)); scene.add(m);
+    const lab=makeLabel(z.name.split(' – ')[0],z.color);
+    const lz = {STB:3.3,TOM:3.0,DEM:4.1,AQU:2.4,LET:2.5,SVC:2.6,NUR:2.6}[z.id]||2.4;
+    lab.position.copy(V(z.x0+w/2,z.y0+d/2,lz)); scene.add(lab); labelSprites.push(lab);
+  });
+
+  /* categories */
+  K.categories.forEach(c=>{ const g=new THREE.Group(); g.userData.cat=c.id; scene.add(g); catGroup[c.id]=g; });
+  const UP=new THREE.Vector3(0,1,0);
+  items.forEach(it=>{
+    if(!it.geo.length) return;
+    const mat=catMat(it.cat);
+    // special looks
+    if(it.tag==='STR-13'){ mat.transparent=true; mat.opacity=0.28; mat.depthWrite=false; mat.color.set(0xdfeaf2); }
+    if(it.tag==='STR-05'||it.tag==='STR-06'){ mat.transparent=true; mat.opacity=0.55; }
+    if(it.tag==='CLM-04'){ mat.transparent=true; mat.opacity=0.18; mat.depthWrite=false; mat.color.set(0x9aa0a6); mat.side=THREE.DoubleSide; }
+    if(it.tag==='STR-07'||it.tag==='STR-08'||it.tag==='STR-18'){ mat.color.set(0x6b6f72); }
+    if(it.tag==='STR-09'){ mat.color.set(0xb9b2a3); }
+    if(it.status==='existing'){ mat.color.set(0x3a3f3c); }
+    const list=[];
+    if(it.tag==='ELC-08'){ // solar panel: draw as a tilted thin panel on two legs instead of a block
+      const g=it.geo[0], c=V((g.x0+g.x1)/2,(g.y0+g.y1)/2,(g.z0+g.z1)/2);
+      const p=new THREE.Mesh(new THREE.BoxGeometry(g.x1-g.x0,0.04,g.y1-g.y0),mat); p.position.copy(c); p.rotation.x=-0.17; list.push(p);
+      [g.x0+0.2,g.x1-0.2].forEach(x=>{ const l=new THREE.Mesh(new THREE.BoxGeometry(0.05,(g.z0+g.z1)/2,0.05),mat); l.position.copy(V(x,(g.y0+g.y1)/2,(g.z0+g.z1)/4)); list.push(l); });
+      mat.color.set(0x24426b);
+    } else {
+    const boxes=it.geo.filter(g=>g.t==='box');
+    // many equal boxes -> one InstancedMesh
+    if(boxes.length>20 && boxes.length===it.geo.length){
+      const b0=boxes[0], dx=b0.x1-b0.x0, dy=b0.y1-b0.y0, dz=b0.z1-b0.z0;
+      const im=new THREE.InstancedMesh(new THREE.BoxGeometry(dx,dz,dy),mat,boxes.length);
+      const m4=new THREE.Matrix4();
+      boxes.forEach((b,i)=>{ m4.makeTranslation(...V((b.x0+b.x1)/2,(b.y0+b.y1)/2,(b.z0+b.z1)/2).toArray()); im.setMatrixAt(i,m4); });
+      list.push(im);
+    } else {
+      it.geo.forEach(g=>{
+        if(g.t==='box'){
+          const a=V(g.x0,g.y0,g.z0), b=V(g.x1,g.y1,g.z1);
+          const m=new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.01,Math.abs(b.x-a.x)),Math.max(0.01,Math.abs(b.y-a.y)),Math.max(0.01,Math.abs(b.z-a.z))),mat);
+          m.position.set((a.x+b.x)/2,(a.y+b.y)/2,(a.z+b.z)/2); list.push(m);
+        } else if(g.t==='cyl'){
+          const m=new THREE.Mesh(new THREE.CylinderGeometry(g.r,g.r,g.h,28),mat);
+          m.position.copy(V(g.x,g.y,g.z0+g.h/2)); list.push(m);
+        } else if(g.t==='pipe'){
+          const r=Math.max(g.d/2,0.022);
+          for(let k=0;k<g.pts.length-1;k++){
+            const a=V(...g.pts[k]), b=V(...g.pts[k+1]); const d=b.clone().sub(a), L=d.length(); if(L<1e-4) continue;
+            const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,10),mat);
+            m.position.copy(a).addScaledVector(d,0.5); m.quaternion.setFromUnitVectors(UP,d.normalize()); list.push(m);
+            if(k>0){ const j=new THREE.Mesh(new THREE.SphereGeometry(r*1.05,10,8),mat); j.position.copy(a); list.push(j); }
+          }
+        }
+      });
+    }
+    }
+    list.forEach(m=>{ m.userData.item=it; m.userData.orig=mat; catGroup[it.cat].add(m); pickables.push(m); });
+    itemMeshes[it.tag]=list;
+  });
+
+  /* plants (decorative, part of growing systems) */
+  const leaf=new THREE.MeshStandardMaterial({color:0x4f9a3c,roughness:0.8});
+  const leafLight=new THREE.MeshStandardMaterial({color:0x7cc35a,roughness:0.8});
+  const fruit=new THREE.MeshStandardMaterial({color:0xd63a2f,roughness:0.5});
+  const plantG=new THREE.Group(); catGroup.GRW.add(plantG);
+  function inst(geo,mat,pts){
+    const im=new THREE.InstancedMesh(geo,mat,pts.length); const m4=new THREE.Matrix4();
+    pts.forEach((p,i)=>{ m4.makeTranslation(p.x,p.y,p.z); im.setMatrixAt(i,m4); }); plantG.add(im); return im;
+  }
+  const byTag=t=>K.items.find(i=>i.tag===t);
+  // tomatoes: tall thin plants on each bucket
+  const tomPts=byTag('GRW-01').geo.map(b=>V((b.x0+b.x1)/2,(b.y0+b.y1)/2,b.z1+0.9));
+  inst(new THREE.CylinderGeometry(0.11,0.07,1.8,6),leaf,tomPts);
+  inst(new THREE.SphereGeometry(0.05,6,5),fruit,tomPts.filter((p,i)=>i%2===0).map(p=>p.clone().add(new THREE.Vector3(0.08,-0.45,0.04))));
+  // NFT lettuce
+  const nftPts=[]; byTag('GRW-06').geo.forEach(b=>{ for(let x=b.x0+0.1;x<b.x1;x+=0.2) nftPts.push(V(x,(b.y0+b.y1)/2,b.z1+0.06)); });
+  inst(new THREE.SphereGeometry(0.085,7,5),leafLight,nftPts);
+  // strawberry gutters
+  const stbPts=[]; byTag('GRW-08').geo.filter(b=>b.z0>0.5).forEach(b=>{ for(let x=b.x0+0.1;x<b.x1;x+=0.2){ stbPts.push(V(x,b.y0+0.08,b.z1+0.07),V(x,b.y1-0.08,b.z1+0.07)); } });
+  inst(new THREE.SphereGeometry(0.075,7,5),leaf,stbPts);
+  inst(new THREE.SphereGeometry(0.03,6,5),fruit,stbPts.filter((p,i)=>i%3===0).map(p=>p.clone().add(new THREE.Vector3(0,-0.08,0.06))));
+  // rafts
+  const raftPts=[]; byTag('GRW-12').geo.forEach(b=>{ for(let x=b.x0+0.15;x<b.x1;x+=0.24) for(let y=b.y0+0.15;y<b.y1-0.05;y+=0.24) raftPts.push(V(x,y,b.z1+0.06)); });
+  inst(new THREE.SphereGeometry(0.08,7,5),leafLight,raftPts);
+  // media bed, teaching benches
+  const mb=byTag('GRW-14').geo[0]; const mbPts=[]; for(let x=mb.x0+0.2;x<mb.x1;x+=0.35) for(let y=mb.y0+0.2;y<mb.y1;y+=0.3) mbPts.push(V(x,y,mb.z1+0.15));
+  inst(new THREE.SphereGeometry(0.13,7,5),leaf,mbPts);
+  const dPts=[]; ['GRW-10','GRW-11'].forEach(t=>{ const b=byTag(t).geo[0]; for(let x=b.x0+0.2;x<b.x1;x+=0.3) for(let y=b.y0+0.2;y<b.y1;y+=0.4) dPts.push(V(x,y,b.z1+0.08)); });
+  inst(new THREE.SphereGeometry(0.08,7,5),leafLight,dPts);
+  // nursery seedling trays
+  const trays=[]; byTag('GRW-16').geo.forEach(b=>{ for(let x=b.x0+0.3;x<b.x1-0.2;x+=0.6) trays.push(V(x,(b.y0+b.y1)/2,b.z1+0.04)); });
+  inst(new THREE.BoxGeometry(0.52,0.06,0.28),leafLight,trays);
+  plantG.traverse(o=>{ if(o.isInstancedMesh){ o.userData.item={tag:'—',name:'Plants (illustration only)',cat:'GRW',spec:'Shows plant positions so the model reads as a farm. Counts come from the register.',deco:true}; o.userData.orig=o.material; pickables.push(o);} });
+
+  // theme
+  applyTheme();
+}
+
+/* ---------- labels ---------- */
+function makeLabel(text,color,big){
+  const c=document.createElement('canvas'); const g=c.getContext('2d');
+  const fs=big?44:36; g.font=`600 ${fs}px Barlow, system-ui, sans-serif`;
+  const w=Math.ceil(g.measureText(text).width)+40; c.width=w; c.height=fs+28;
+  g.font=`600 ${fs}px Barlow, system-ui, sans-serif`;
+  g.fillStyle='rgba(255,255,255,0.88)'; roundRect(g,0,0,w,c.height,12); g.fill();
+  if(color){ g.fillStyle=color; g.fillRect(0,0,10,c.height); }
+  g.fillStyle='#1d2421'; g.textBaseline='middle'; g.fillText(text,color?22:20,c.height/2+2);
+  const t=new THREE.CanvasTexture(c); t.minFilter=THREE.LinearFilter;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true,sizeAttenuation:false}));
+  const k=big?0.00034:0.00027; s.scale.set(w*k,c.height*k,1); s.renderOrder=10; return s;
+}
+function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+
+/* ---------- UI: info panel ---------- */
+const info=document.getElementById('info');
+const tip=document.getElementById('tip');
+let selected=null;
+const hl=R3?new THREE.MeshStandardMaterial({color:0xffb300,emissive:0x8a5a00,roughness:0.4}):null;
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function showInfo(it){
+  if(!it){ info.innerHTML='<span class="muted">Tap a part in the model, or a line in the parts list, to see its tag, specification and status.</span>'; return; }
+  if(it.deco){ info.innerHTML=`<div class="name">${esc(it.name)}</div><span class="muted">${esc(it.spec)}</span>`; return; }
+  const z=ZONE[it.zone], c=CAT[it.cat];
+  const modelled=it.geo&&it.geo.length;
+  info.innerHTML=`<div class="name">${esc(it.tag)} · ${esc(it.name)}</div>
+  <dl><dt>Category</dt><dd><span class="sw" style="display:inline-block;vertical-align:-1px;background:${c.color}"></span> ${esc(c.name)}</dd>
+  <dt>Zone</dt><dd>${esc(z?z.name:it.zone)}</dd>
+  <dt>Quantity</dt><dd class="mono">${esc(it.qty)} ${esc(it.unit)}</dd>
+  <dt>Status</dt><dd><span class="badge b-${esc(it.status)}">${esc(it.status)}</span>${modelled?'':' <span class="badge b-nomodel">not modelled</span>'}</dd>
+  <dt>Spec</dt><dd>${esc(it.spec)}</dd>
+  ${it.note?`<dt>Note</dt><dd style="color:var(--warn)">${esc(it.note)}</dd>`:''}</dl>`;
+}
+function select(it,frame){
+  if(selected && itemMeshes[selected.tag]) itemMeshes[selected.tag].forEach(m=>m.material=m.userData.orig);
+  document.querySelectorAll('ul.parts li.sel').forEach(li=>li.classList.remove('sel'));
+  selected=it&&!it.deco?it:null;
+  showInfo(it);
+  if(!selected) return;
+  const li=document.querySelector(`ul.parts li[data-tag="${selected.tag}"]`); if(li) li.classList.add('sel');
+  const ms=itemMeshes[selected.tag];
+  if(ms && R3){
+    ms.forEach(m=>m.material=hl);
+    if(!catGroup[selected.cat].visible){ catGroup[selected.cat].visible=true; const cb=document.getElementById('c-'+selected.cat); if(cb) cb.checked=true; }
+    if(frame){
+      const bb=new THREE.Box3(); ms.forEach(m=>bb.expandByObject(m));
+      const c=bb.getCenter(new THREE.Vector3()), s=Math.max(bb.getSize(new THREE.Vector3()).length(),1.2);
+      flyTo(c, Math.min(Math.max(s*1.6,6),30));
+    }
+  }
+}
+
+/* ---------- UI: categories ---------- */
+const catUl=document.getElementById('cats');
+K.categories.forEach(c=>{
+  const n=items.filter(i=>i.cat===c.id).length;
+  const li=document.createElement('li');
+  li.innerHTML=`<label for="c-${c.id}"><input type="checkbox" id="c-${c.id}" checked><span class="sw" style="background:${c.color}"></span>${esc(c.name)}<span class="n mono">${n}</span></label>`;
+  li.querySelector('input').addEventListener('change',e=>{ if(catGroup[c.id]) catGroup[c.id].visible=e.target.checked; });
+  catUl.appendChild(li);
+});
+function setAll(v){ K.categories.forEach(c=>{ document.getElementById('c-'+c.id).checked=v; if(catGroup[c.id]) catGroup[c.id].visible=v; }); }
+document.getElementById('allOn').onclick=()=>setAll(true);
+document.getElementById('allOff').onclick=()=>setAll(false);
+
+/* ---------- UI: zones ---------- */
+const zb=document.getElementById('zoneBtns'), zsel=document.getElementById('zoneOnly');
+const zoneView={ all:null };
+K.zones.forEach(z=>{
+  const b=document.createElement('button'); b.innerHTML=`<span class="sw" style="background:${z.color}"></span>${esc(z.name.split(' – ')[0])}`;
+  b.title=z.name; b.onclick=()=>flyZone(z.id); zb.appendChild(b);
+  const o=document.createElement('option'); o.value=z.id; o.textContent=z.name; zsel.appendChild(o);
+});
+zsel.addEventListener('change',()=>{
+  const id=zsel.value;
+  items.forEach(it=>(itemMeshes[it.tag]||[]).forEach(m=>{ m.visible=!id || it.zone===id; }));
+  if(id) flyZone(id);
+});
+function flyZone(id){
+  if(!R3) return; const z=ZONE[id];
+  if(z.house==='site'){ flyTo(V(4,12.5,0.5),18); return; }
+  const c=V((z.x0+z.x1)/2,(z.y0+z.y1)/2,0.8);
+  const span=Math.max(z.x1-z.x0,z.y1-z.y0);
+  flyTo(c, Math.min(Math.max(span*1.25,6),32));
+}
+
+/* ---------- UI: parts list ---------- */
+const partsDiv=document.getElementById('parts');
+function renderParts(q){
+  q=(q||'').trim().toLowerCase();
+  partsDiv.innerHTML='';
+  K.categories.forEach(c=>{
+    const list=items.filter(i=>i.cat===c.id && (!q || (i.tag+' '+i.name+' '+i.spec+' '+(i.note||'')).toLowerCase().includes(q)));
+    if(!list.length) return;
+    const d=document.createElement('details'); d.className='grp'; if(q) d.open=true;
+    d.innerHTML=`<summary><span class="sw" style="background:${c.color}"></span>${esc(c.name)}<span class="n mono">${list.length}</span></summary><ul class="parts"></ul>`;
+    const ul=d.querySelector('ul');
+    list.forEach(it=>{
+      const li=document.createElement('li'); li.dataset.tag=it.tag; if(selected&&selected.tag===it.tag) li.classList.add('sel');
+      const mod=it.geo&&it.geo.length;
+      li.innerHTML=`<span class="tag">${esc(it.tag)}</span><span>${esc(it.name)}</span>
+        <span class="meta"><span class="mono">${esc(it.qty)} ${esc(it.unit)}</span><span class="badge b-${esc(it.status)}">${esc(it.status)}</span>${mod?'':'<span class="badge b-nomodel">not modelled (in register)</span>'}</span>
+        ${it.note?`<span class="confirm">⚑ ${esc(it.note)}</span>`:''}`;
+      li.onclick=()=>select(it,true);
+      ul.appendChild(li);
+    });
+    partsDiv.appendChild(d);
+  });
+}
+renderParts();
+document.getElementById('q').addEventListener('input',e=>renderParts(e.target.value));
+
+if(!R3) return;
+
+/* ---------- camera ---------- */
+let anim=null;
+function flyTo(target,dist){
+  const dir=camera.position.clone().sub(controls.target); if(dir.length()<0.1) dir.set(-1,1,1);
+  dir.normalize(); if(dir.y<0.35){ dir.y=0.35; dir.normalize(); }
+  anim={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1:target.clone().addScaledVector(dir,dist),t1:target.clone()};
+}
+function resetView(){ anim=null; camera.position.set(-16,19,-26); controls.target.set(0,0.5,-1.5); controls.update(); }
+document.getElementById('resetBtn').onclick=resetView;
+resetView();
+
+/* ---------- toggles ---------- */
+let xray=false, roofOn=true, labelsOn=true;
+const xb=document.getElementById('xrayBtn');
+xb.onclick=()=>{ xray=!xray; xb.setAttribute('aria-pressed',xray);
+  houseMats.forEach(m=>{ if(m.userData.o==null) m.userData.o=m.opacity; m.transparent=true; m.opacity=xray?m.userData.o*0.25:m.userData.o; });
+  catGroup.STR.children.forEach(m=>{ const mt=m.userData.orig; if(mt.userData.o==null){ mt.userData.o=mt.opacity; mt.userData.tr=mt.transparent; mt.userData.dw=mt.depthWrite; }
+    mt.transparent=xray||mt.userData.tr; mt.opacity=xray?Math.min(mt.userData.o,0.15):mt.userData.o; mt.depthWrite=xray?false:mt.userData.dw; mt.needsUpdate=true; });
+};
+const rb=document.getElementById('roofBtn');
+rb.onclick=()=>{ roofOn=!roofOn; rb.setAttribute('aria-pressed',roofOn); roofMeshes.forEach(m=>m.visible=roofOn); };
+const lbtn=document.getElementById('labelBtn');
+lbtn.onclick=()=>{ labelsOn=!labelsOn; lbtn.setAttribute('aria-pressed',labelsOn); labelSprites.forEach(s=>s.visible=labelsOn); };
+
+/* ---------- picking ---------- */
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+function visibleUp(o){ while(o){ if(!o.visible) return false; o=o.parent; } return true; }
+function pick(ev){
+  const r=renderer.domElement.getBoundingClientRect();
+  mouse.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(mouse,camera);
+  const cands=pickables.filter(m=>visibleUp(m) && !(xray && m.userData.item.cat==='STR'));
+  const hits=ray.intersectObjects(cands,false);
+  // skip see-through shade screen and chamber walls if something solid is behind
+  for(const h of hits){ const t=h.object.userData.item.tag; if(t==='CLM-04' || (t==='STR-13' && hits.length>1)) continue; return h.object; }
+  return hits.length?hits[0].object:null;
+}
+let down=null;
+renderer.domElement.addEventListener('pointerdown',e=>{ down=[e.clientX,e.clientY]; anim=null; });
+renderer.domElement.addEventListener('pointerup',e=>{ if(down && Math.hypot(e.clientX-down[0],e.clientY-down[1])<5){ const m=pick(e); select(m?m.userData.item:null,false); } down=null; });
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse' || e.buttons){ tip.hidden=true; return; }
+  const m=pick(e); if(!m){ tip.hidden=true; renderer.domElement.style.cursor=''; return; }
+  renderer.domElement.style.cursor='pointer';
+  const r=stage.getBoundingClientRect(), it=m.userData.item; tip.textContent=(it.deco?'':it.tag+' · ')+it.name; tip.hidden=false;
+  tip.style.left=Math.min(e.clientX-r.left+14,r.width-200)+'px'; tip.style.top=(e.clientY-r.top+10)+'px';
+});
+renderer.domElement.addEventListener('pointerleave',()=>{ tip.hidden=true; });
+
+/* ---------- theme ---------- */
+function applyTheme(){
+  const cs=getComputedStyle(document.documentElement);
+  scene.background=new THREE.Color(cs.getPropertyValue('--scene').trim()||'#e4e8e2');
+  const dark=scene.background.getHSL({}).l<0.3;
+  if(scene.userData.groundMat) scene.userData.groundMat.color.set(dark?0x222a26:0xcfd5cd);
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function resize(){ const w=stage.clientWidth,h=stage.clientHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+/* ---------- deep links: #zone=AQU&sel=TNK-10&xray&noroof (handy for reviews) ---------- */
+const hp=new URLSearchParams(location.hash.slice(1));
+if(hp.has('noroof')) rb.click();
+if(hp.has('xray')) xb.click();
+if(hp.get('cam')){ const c=hp.get('cam').split(',').map(Number); if(c.length===6){ camera.position.set(c[0],c[1],c[2]); controls.target.set(c[3],c[4],c[5]); controls.update(); } }
+if(hp.get('zone')){ flyZone(hp.get('zone')); if(anim) anim.t=1; }
+if(hp.get('sel')){ const it=items.find(i=>i.tag===hp.get('sel')); if(it){ select(it,true); if(anim) anim.t=1; } }
+
+let last=performance.now();
+function frame(t){
+  const dt=Math.min(0.05,(t-last)/1000); last=t;
+  if(anim){ anim.t=Math.min(1,anim.t+dt*1.6); const e=anim.t<1?1-Math.pow(1-anim.t,3):1;
+    camera.position.lerpVectors(anim.p0,anim.p1,e); controls.target.lerpVectors(anim.t0,anim.t1,e); if(anim.t>=1) anim=null; }
+  controls.update(); renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

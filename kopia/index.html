@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KOPIA Smart Greenhouse · GrowTech</title>
+<meta name="description" content="Design review package for the KOPIA Ghana Center smart greenhouse renovation – 3D model, drawings and component register.">
+<link rel="icon" href="../assets/growtech-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F1F4EE;--surface:#FFFFFF;--ink:#0E2318;--muted:#4D6155;--line:#D3DDD5;
+  --leaf:#1E7A4B;--leaf-soft:#DBEBDF;--sun:#F2A900;--sun-ink:#7F5600;--sun-soft:#FBEFCF;--water:#2A6CAE;--warn:#B0451E;--warn-soft:#F6E0D6;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;--body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#08140F;--surface:#0F1F17;--ink:#E6EFE8;--muted:#98AFA2;--line:#20372B;--leaf:#79D19B;--leaf-soft:#173325;--sun:#F7B731;--sun-ink:#F7B731;--sun-soft:#2E2610;--water:#8DBDF0;--warn:#FF9A70;--warn-soft:#3A1F14;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#08140F;--surface:#0F1F17;--ink:#E6EFE8;--muted:#98AFA2;--line:#20372B;--leaf:#79D19B;--leaf-soft:#173325;--sun:#F7B731;--sun-ink:#F7B731;--sun-soft:#2E2610;--water:#8DBDF0;--warn:#FF9A70;--warn-soft:#3A1F14;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--body)}
+a{color:inherit}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+header.top{border-bottom:1px solid var(--line);background:var(--surface)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:700 18px var(--display)}
+.brand img{height:34px;width:auto}
+.status{font:500 12px var(--mono);color:var(--sun-ink);background:var(--sun-soft);border:1px solid var(--sun);padding:4px 10px;border-radius:999px;white-space:nowrap}
+.hero{padding:44px 0 28px}
+.eyebrow{font:500 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--leaf)}
+h1{font:800 clamp(34px,6vw,60px)/1.02 var(--display);letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
+.lede{font-size:18px;color:var(--muted);max-width:720px;margin:0}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:28px 0 0}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.fact b{display:block;font:800 30px/1 var(--display)}
+.fact span{color:var(--muted);font-size:14px}
+.feature{display:block;position:relative;margin:30px 0 10px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#0b1510;text-decoration:none}
+.feature img{display:block;width:100%;height:auto;aspect-ratio:1200/697;object-fit:cover}
+.feature .cta{position:absolute;left:16px;bottom:16px;right:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.feature .cta div{background:rgba(8,20,15,.82);color:#E6EFE8;padding:12px 16px;border-radius:12px;backdrop-filter:blur(6px);max-width:560px}
+.feature .cta h2{font:700 24px/1.1 var(--display);margin:0 0 4px}
+.feature .cta p{margin:0;font-size:14px;color:#c4d4c9}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--body);background:var(--leaf);color:#fff;text-decoration:none;padding:11px 18px;border-radius:999px;border:0;white-space:nowrap}
+:root[data-theme="dark"] .btn{color:#08140F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#08140F}}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+section{padding:26px 0}
+h2.sec{font:700 28px/1.1 var(--display);margin:0 0 6px}
+.sec-sub{color:var(--muted);margin:0 0 18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.card img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;object-position:top left;border-bottom:1px solid var(--line);background:#fff}
+.card .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;flex:1}
+.card h3{font:700 21px/1.15 var(--display);margin:0}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.card .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.card .links a{font:600 14px var(--body);text-decoration:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line)}
+.card .links a.primary{background:var(--leaf);border-color:var(--leaf);color:#fff}
+:root[data-theme="dark"] .card .links a.primary{color:#08140F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .card .links a.primary{color:#08140F}}
+.zones{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.zone{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:14px 16px}
+.zone h4{margin:0 0 4px;font:700 18px var(--display)}
+.zone p{margin:0;color:var(--muted);font-size:14.5px}
+.note{background:var(--warn-soft);border:1px solid var(--warn);border-radius:12px;padding:16px 18px}
+.note h3{margin:0 0 6px;font:700 19px var(--display);color:var(--warn)}
+.note ul{margin:0;padding-left:20px}
+.note li{margin:3px 0}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:22px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mono{font-family:var(--mono)}
+@media (max-width:700px){.brand span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.brand img{height:28px}.status{font-size:11px;padding:3px 8px}}
+@media (max-width:560px){.feature .cta .btn{width:100%;justify-content:center}.hero{padding-top:30px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../"><img src="../assets/growtech-logo.png" alt=""><span>Grow Technologies (GrowTech)</span></a>
+  <span class="status">Rev A · for review · not priced</span>
+</div></header>
+
+<main class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Client project · KOPIA Ghana Center, Accra</div>
+    <h1>KOPIA smart greenhouse renovation</h1>
+    <p class="lede">The design review package for renovating KOPIA's existing greenhouse and nursery: hydroponic tomato, lettuce and strawberry, a tilapia aquaponics section, clean water from a reverse-osmosis plant, and automatic nutrient, pH and climate control on one dashboard.</p>
+    <div class="facts">
+      <div class="fact"><b>24.1 × 11.3 m</b><span>main greenhouse + nursery house</span></div>
+      <div class="fact"><b id="f-tom">258</b><span>tomato plants on drip</span></div>
+      <div class="fact"><b id="f-let">540</b><span>lettuce in vertical NFT</span></div>
+      <div class="fact"><b id="f-stb">120</b><span>strawberries in a cool chamber</span></div>
+      <div class="fact"><b id="f-raft">~432</b><span>aquaponic raft plants</span></div>
+      <div class="fact"><b>143</b><span>components in 13 categories</span></div>
+    </div>
+
+    <a class="feature" href="3d-model.html">
+      <img src="img/model.jpg" alt="3D model of the renovated KOPIA greenhouse and nursery with all zones and equipment">
+      <div class="cta">
+        <div><h2>Explore the 3D model</h2><p>Turn each category on or off, fly to any zone, look through the structure, and click any part to see its tag and specification.</p></div>
+        <span class="btn">Open 3D model →</span>
+      </div>
+    </a>
+  </div>
+
+  <section>
+    <h2 class="sec">Design package</h2>
+    <p class="sec-sub">Everything below is generated from one design file, so the model, drawings and register always match. Tags such as <span class="mono">TNK-02</span> are the same everywhere.</p>
+    <div class="cards">
+      <article class="card">
+        <img src="img/drawings.jpg" alt="Sheet D-02 – main greenhouse floor plan">
+        <div class="body">
+          <h3>2D drawings (8 sheets, A3)</h3>
+          <p>Site plan, main-house floor plan, five sections, nursery plan, water &amp; nutrient flow schematic, control &amp; automation diagram, notes and assumptions.</p>
+          <div class="links"><a class="primary" href="KOPIA-drawings-RevA.pdf">PDF</a><a href="drawings.html">View in browser</a></div>
+        </div>
+      </article>
+      <article class="card">
+        <img src="img/register.jpg" alt="Component register summary by category">
+        <div class="body">
+          <h3>Component register</h3>
+          <p>Every part with its tag, specification, quantity, zone and status (new, existing, relocated, reused, optional), grouped into 13 categories with tick boxes.</p>
+          <div class="links"><a class="primary" href="KOPIA-component-register-RevA.pdf">PDF</a><a href="register.html">View in browser</a><a href="KOPIA-component-register-RevA.csv">Spreadsheet (CSV)</a></div>
+        </div>
+      </article>
+      <article class="card">
+        <img src="img/flow.jpg" alt="Water and nutrient flow schematic">
+        <div class="body">
+          <h3>Water &amp; nutrient flow</h3>
+          <p>Salty raw water → RO → clean-water tank → a separate nutrient loop for each crop. Fish water goes one way to the tomatoes; brine goes to a soakaway.</p>
+          <div class="links"><a class="primary" href="drawings.html?sheet=6">Open sheet D-06</a></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">What goes where</h2>
+    <p class="sec-sub">From the entrance to the far end of the main greenhouse, plus the nursery house next to it.</p>
+    <div class="zones">
+      <div class="zone" style="--c:#8a8f99"><h4>Service &amp; tank corner</h4><p>RO plant and clean-water tank, tomato and lettuce nutrient tanks, control panel, 24 V battery backup.</p></div>
+      <div class="zone" style="--c:#c8553d"><h4>Tomato</h4><p>Drip-fed Dutch buckets on a 15 cm raised base, trained up to a 2.4 m high wire.</p></div>
+      <div class="zone" style="--c:#5a9e3a"><h4>Lettuce</h4><p>Vertical NFT A-frames with 5 channel levels per side.</p></div>
+      <div class="zone" style="--c:#d1495b"><h4>Strawberry cool chamber</h4><p>A clear chamber with its own AC and chilled root water, for cool nights and real flowering.</p></div>
+      <div class="zone" style="--c:#e0a526"><h4>Teaching benches</h4><p>Wick and Kratky demonstration systems for students.</p></div>
+      <div class="zone" style="--c:#2f7fb5"><h4>Aquaponics</h4><p>2,000 L tilapia tank, filters, gravel bed and deep-water rafts. Fish water also feeds the tomatoes.</p></div>
+      <div class="zone" style="--c:#7b6cb0"><h4>Nursery house</h4><p>Five 5 m seedling benches with misting and LED day-length lights.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="note">
+      <h3>Status: Rev A, for review</h3>
+      <ul>
+        <li>For discussion only: not for construction, and not a quotation.</li>
+        <li>Some dimensions are assumed and will be measured on site (wall and ridge height, nursery width, orientation, fan sizes).</li>
+        <li>A water-quality test will confirm the size of the reverse-osmosis plant.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">
+  <span>© 2026 Grow Technologies (GrowTech) · Accra, Ghana</span>
+  <span>(+233) 544198026 · <a href="../">growtech.starterstech.com</a></span>
+</div></footer>
+</body>
+</html>
