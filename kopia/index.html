@@ -50,6 +50,16 @@ h1{font:800 clamp(34px,6vw,60px)/1.02 var(--display);letter-spacing:-.02em;margi
 section{padding:26px 0}
 h2.sec{font:700 28px/1.1 var(--display);margin:0 0 6px}
 .sec-sub{color:var(--muted);margin:0 0 18px}
+.bid{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:22px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;text-decoration:none;color:inherit}
+.bid img{width:100%;border-radius:8px;border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.12);display:block}
+.bid h3{font:700 24px/1.15 var(--display);margin:0 0 8px}
+.bid p{margin:0 0 10px;color:var(--muted);font-size:15px}
+.bid ul{margin:0 0 14px;padding-left:18px;color:var(--muted);font-size:15px}
+.bid .links{display:flex;gap:8px;flex-wrap:wrap}
+.bid .links a{font:600 14px var(--body);text-decoration:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line)}
+.bid .links a.primary{background:var(--leaf);border-color:var(--leaf);color:#fff}
+:root[data-theme="dark"] .bid .links a.primary{color:#08140F}
+@media (max-width:620px){.bid{grid-template-columns:1fr}.bid img{max-width:220px}}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
 .card img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;object-position:top left;border-bottom:1px solid var(--line);background:#fff}
@@ -79,7 +89,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="../"><img src="../assets/growtech-logo.png" alt=""><span>Grow Technologies (GrowTech)</span></a>
-  <span class="status">Rev A.7 · for review · not priced</span>
+  <span class="status">Rev A.7 · bid GT-KOPIA-001</span>
 </div></header>
 
 <main class="wrap">
@@ -104,6 +114,26 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       </div>
     </a>
   </div>
+
+  <section>
+    <h2 class="sec">Bid and estimate</h2>
+    <p class="sec-sub">Our bid for the renovation, reference <span class="mono">GT-KOPIA-001</span>, dated 24 November 2026.</p>
+    <div class="bid">
+      <a href="KOPIA-Bid-GT-KOPIA-001.pdf"><img src="img/bid.jpg" alt="Cover of the GrowTech bid document for KOPIA Ghana Center"></a>
+      <div>
+        <h3>Bid document (19 pages, PDF)</h3>
+        <p>One document with the whole proposal:</p>
+        <ul>
+          <li>project summary, design and the decisions behind it</li>
+          <li>automation, 3D views and the 2D drawings</li>
+          <li>estimate by category, optional extras and payment stages</li>
+          <li>the steps from this estimate to the final quote, warranty, team and partners</li>
+        </ul>
+        <p>This is an estimate, not the final quote. The final quote follows site measurements and a water test once the bid is accepted.</p>
+        <div class="links"><a class="primary" href="KOPIA-Bid-GT-KOPIA-001.pdf">Open the bid (PDF)</a><a href="KOPIA-Bid-GT-KOPIA-001.pdf" download>Download</a></div>
+      </div>
+    </div>
+  </section>
 
   <section>
     <h2 class="sec">Design package</h2>
