@@ -105,6 +105,7 @@ body.single .sheet { margin: 0; box-shadow: none; }
   add({ tag: 'STR-16', where: 'Both gables', cat: 'STR', zone: 'CLM', name: 'Fan mounting frames in the gables', spec: 'Steel frames + flashing for 4 × 1.27 m box fans, insect-net cowls', qty: 4, unit: 'no.' });
   add({ tag: 'STR-17', cat: 'STR', zone: 'EXT', name: 'Drain line and soakaway for RO brine and tank dumps', spec: 'Soakaway pit or approved discharge point, about 1.5 × 1.5 × 1.5 m, outside the house', qty: 1, unit: 'no.', geo: [box(-3.5, 9.5, -0.3, -2.0, 11.0, 0.05)] });
   add({ tag: 'STR-18', cat: 'STR', zone: 'NUR', name: 'Nursery: concrete pipe cover along the centre', spec: 'As STR-07, 23.5 m', qty: 23.5, unit: 'm', geo: [box(0.3, -4.95, -0.3, 23.8, -4.35, 0)] });
+  add({ tag: 'STR-25', cat: 'STR', zone: 'NUR', name: 'Nursery entrance (existing) at the left end', spec: 'Existing double door in the nursery gable on the same end as the main house\'s old entrance; repair and add a self-closing insect-proof door', qty: 1, unit: 'no.', status: 'reuse', geo: [box(-0.1, -5.3, 0, 0.05, -4.0, 2.0)] });
   add({ tag: 'STR-19', cat: 'STR', zone: 'NUR', name: 'Nursery: roof film / net repairs', spec: 'Patch or replace damaged film and net', qty: 1, unit: 'lot', note: 'Condition to check – the photos show it in better shape than the main house' });
   add({ tag: 'STR-20', cat: 'STR', zone: 'EXT', name: 'Outdoor-unit platform and shade (AC + chiller)', spec: 'Concrete pad + small roof outside the right wall behind the chamber, clear of the new entrance', qty: 1, unit: 'no.', geo: [box(16.0, 11.6, 0, 18.2, 12.4, 0.1)] });
 
@@ -628,7 +629,7 @@ body.single .sheet { margin: 0; box-shadow: none; }
     out += T(v.X(HN.x0 + HN.L / 2), v.Y(HN.y0) - 2.5, HN.name.toUpperCase() + ' ' + HN.L + ' × ' + HN.W + ' m (width ASSUMED)', { fs: 3, bold: true, anchor: 'middle' });
     L.block(v.X(2), v.Y(HM.y0 + HM.W) + 3, v.X(14.5), v.Y(HM.y0 + HM.W) + 7.5); L.block(v.X(3), v.Y(HN.y0) - 6, v.X(21), v.Y(HN.y0) - 1.5);
     // labels: only outside items + a few key items
-    const keep = P.groups.filter(g => g.it.zone === 'EXT' || ['STR-05', 'STR-06', 'CLM-01', 'CLM-02', 'STR-13', 'TNK-10', 'WTR-01', 'STR-21'].includes(g.d.tag));
+    const keep = P.groups.filter(g => g.it.zone === 'EXT' || ['STR-05', 'STR-25', 'CLM-01', 'CLM-02', 'STR-13', 'TNK-10', 'WTR-01', 'STR-21'].includes(g.d.tag));
     out += labelGroups(keep, L, 15);
     // dims
     out += dimV(v.Y(HN.y0 + HN.W), v.Y(HM.y0), v.X(27.6), 'gap ' + (HM.y0 - HN.y0 - HN.W).toFixed(1) + ' (ASSUMED)');

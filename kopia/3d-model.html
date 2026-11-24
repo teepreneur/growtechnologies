@@ -226,6 +226,7 @@ ul.parts .meta{grid-column:2;display:flex;gap:5px;flex-wrap:wrap;align-items:cen
   add({ tag: 'STR-16', where: 'Both gables', cat: 'STR', zone: 'CLM', name: 'Fan mounting frames in the gables', spec: 'Steel frames + flashing for 4 × 1.27 m box fans, insect-net cowls', qty: 4, unit: 'no.' });
   add({ tag: 'STR-17', cat: 'STR', zone: 'EXT', name: 'Drain line and soakaway for RO brine and tank dumps', spec: 'Soakaway pit or approved discharge point, about 1.5 × 1.5 × 1.5 m, outside the house', qty: 1, unit: 'no.', geo: [box(-3.5, 9.5, -0.3, -2.0, 11.0, 0.05)] });
   add({ tag: 'STR-18', cat: 'STR', zone: 'NUR', name: 'Nursery: concrete pipe cover along the centre', spec: 'As STR-07, 23.5 m', qty: 23.5, unit: 'm', geo: [box(0.3, -4.95, -0.3, 23.8, -4.35, 0)] });
+  add({ tag: 'STR-25', cat: 'STR', zone: 'NUR', name: 'Nursery entrance (existing) at the left end', spec: 'Existing double door in the nursery gable on the same end as the main house\'s old entrance; repair and add a self-closing insect-proof door', qty: 1, unit: 'no.', status: 'reuse', geo: [box(-0.1, -5.3, 0, 0.05, -4.0, 2.0)] });
   add({ tag: 'STR-19', cat: 'STR', zone: 'NUR', name: 'Nursery: roof film / net repairs', spec: 'Patch or replace damaged film and net', qty: 1, unit: 'lot', note: 'Condition to check – the photos show it in better shape than the main house' });
   add({ tag: 'STR-20', cat: 'STR', zone: 'EXT', name: 'Outdoor-unit platform and shade (AC + chiller)', spec: 'Concrete pad + small roof outside the right wall behind the chamber, clear of the new entrance', qty: 1, unit: 'no.', geo: [box(16.0, 11.6, 0, 18.2, 12.4, 0.1)] });
 
@@ -484,7 +485,9 @@ const houseMats=[]; let roofMeshes=[], labelSprites=[];
 
 // data (x along, y across, z up) -> three (x, z, -y), centred on the site
 const CX=12.05, CY=2.0;
-const V=(x,y,z)=>new THREE.Vector3(x-CX, z, -(y-CY));
+// data axes: x along the house, y across (y grows away from the nursery, towards the new side entrance), z up.
+// Three.js is right-handed with Y up, so data y maps to +Z (mapping it to -Z would mirror the site).
+const V=(x,y,z)=>new THREE.Vector3(x-CX, z, (y-CY));
 
 if(R3){
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -586,7 +589,7 @@ function build(){
     const mat=catMat(it.cat);
     // special looks
     if(it.tag==='STR-13'){ mat.transparent=true; mat.opacity=0.28; mat.depthWrite=false; mat.color.set(0xdfeaf2); }
-    if(it.tag==='STR-05'||it.tag==='STR-06'){ mat.transparent=true; mat.opacity=0.55; }
+    if(it.tag==='STR-05'||it.tag==='STR-21'||it.tag==='STR-25'){ mat.transparent=true; mat.opacity=0.55; }
     if(it.tag==='CLM-04'){ mat.transparent=true; mat.opacity=0.18; mat.depthWrite=false; mat.color.set(0x9aa0a6); mat.side=THREE.DoubleSide; }
     if(it.tag==='STR-07'||it.tag==='STR-08'||it.tag==='STR-18'){ mat.color.set(0x6b6f72); }
     if(it.tag==='STR-09'){ mat.color.set(0xb9b2a3); }
@@ -791,7 +794,7 @@ function flyTo(target,dist){
   dir.normalize(); if(dir.y<0.35){ dir.y=0.35; dir.normalize(); }
   anim={t:0,p0:camera.position.clone(),t0:controls.target.clone(),p1:target.clone().addScaledVector(dir,dist),t1:target.clone()};
 }
-function resetView(){ anim=null; camera.position.set(-16,19,-26); controls.target.set(0,0.5,-1.5); controls.update(); }
+function resetView(){ anim=null; camera.position.set(-16,19,26); controls.target.set(0,0.5,1.5); controls.update(); }
 document.getElementById('resetBtn').onclick=resetView;
 resetView();
 
